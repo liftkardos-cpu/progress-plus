@@ -19,6 +19,16 @@ import { OnlineReportForm } from "../views/probationer/OnlineReportForm";
 import { OfficerDashboard } from "../views/officer/OfficerDashboard";
 import { OfficerEvaluate } from "../views/officer/OfficerEvaluate";
 import { CaseClosedApprovals } from "../views/officer/CaseClosedApprovals";
+import { CaseManagement } from "../views/officer/CaseManagement";
+import { OfficerReports } from "../views/officer/OfficerReports";
+import { AppointmentManagement } from "../views/officer/AppointmentManagement";
+import { VolunteerControl } from "../views/officer/VolunteerControl";
+import { DrugTest } from "../views/officer/DrugTest";
+import { RiskAssessmentView } from "../views/officer/RiskAssessmentView";
+import { AnalyticsView } from "../views/officer/AnalyticsView";
+import { RehabilitationPlan } from "../views/officer/RehabilitationPlan";
+import { HeatMapView } from "../views/officer/HeatMapView";
+import { OfficerSettings } from "../views/officer/OfficerSettings";
 
 // Partner Views
 import { PartnerDashboard } from "../views/partner/PartnerDashboard";
@@ -60,6 +70,9 @@ export const AppLayout: React.FC = () => {
       case "AI_ASSISTANT":
         return <AIAssistantChat />;
       case "SETTINGS":
+        if (role === "OFFICER") {
+          return <OfficerSettings />;
+        }
         return (
           <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6 text-slate-700">
             <div>
@@ -103,103 +116,36 @@ export const AppLayout: React.FC = () => {
       // 2. OFFICER ROLE VIEWS
       // ==========================================
       case "OFFICER_DASHBOARD":
+        return <OfficerDashboard />;
       case "CASE_MANAGEMENT":
-        return <OfficerDashboard />;
-      case "OFFICER_EVALUATE":
-      case "VOLUNTEER_CONTROL":
-        return <OfficerEvaluate />;
-      case "OFFICER_CLEARANCE":
-        return <CaseClosedApprovals />;
-      
-      // Officer Calendar Scheduler fallback (Page 12 menu)
+        return <CaseManagement />;
+      case "OFFICER_REPORTS":
+        return <OfficerReports />;
       case "APPOINTMENT_MANAGEMENT":
-        return (
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-bold text-slate-800">ปฏิทินตรวจนัดรายงานตัวพนักงาน</h3>
-                <p className="text-xs text-slate-400">ปฏิทินส่วนกลางแสดงวันกำหนดรายงานตัวของผู้คุมประพฤติภายใต้การดูแล</p>
-              </div>
-              <button onClick={() => alert("➕ นัดหมายครั้งใหม่: ดึงข้อมูลแบบคำรองนัดตรวจปัสสาวะ/ตรวจแอลกอฮอล์รายบุคคล")} className="bg-[#1b439c] text-white py-1.5 px-3 rounded-lg text-xs font-bold transition-all">
-                + สร้างนัดหมายใหม่
-              </button>
-            </div>
-
-            {/* Simulated Calendar Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs font-semibold">
-              <div className="p-3 bg-red-50 border border-red-100 rounded-xl space-y-1">
-                <span className="text-[9px] bg-red-600 text-white px-2 py-0.5 rounded-full block w-max uppercase font-bold">ขาดนัด</span>
-                <span className="text-slate-800 block">นายสกล จอมพลัง</span>
-                <span className="text-slate-400 text-[10px]">นัดรายงานตัวงวด 9 • 15 พ.ค. 2567</span>
-              </div>
-              <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl space-y-1">
-                <span className="text-[9px] bg-emerald-600 text-white px-2 py-0.5 rounded-full block w-max uppercase font-bold">ยืนยันแล้ว</span>
-                <span className="text-slate-800 block">{probationerProfile.name}</span>
-                <span className="text-slate-400 text-[10px]">นัดรายงานตัวครั้งที่ 9 • 20 พ.ค. 2567</span>
-              </div>
-              <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl space-y-1">
-                <span className="text-[9px] bg-amber-600 text-white px-2 py-0.5 rounded-full block w-max uppercase font-bold">รอยืนยัน</span>
-                <span className="text-slate-800 block">นางสาวสมใจ นึกงาม</span>
-                <span className="text-slate-400 text-[10px]">นัดตรวจสารเสพติด • 22 พ.ค. 2567</span>
-              </div>
-              <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl space-y-1">
-                <span className="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full block w-max uppercase font-bold">ยืนยันแล้ว</span>
-                <span className="text-slate-800 block">นายกิตติ เกษมราษฎร์</span>
-                <span className="text-slate-400 text-[10px]">นัดบำเพ็ญวัดพระธรรม • 25 พ.ค. 2567</span>
-              </div>
-            </div>
-          </div>
-        );
-
-      // Officer Risk analysis fallback
+        return <AppointmentManagement />;
+      case "VOLUNTEER_CONTROL":
+        return <VolunteerControl />;
+      case "DRUG_TEST":
+        return <DrugTest />;
       case "RISK_ASSESSMENT":
-        return (
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-            <div>
-              <h3 className="text-sm font-bold text-slate-800">ระบบประเมินดัชนีเฝ้าระวังความเสี่ยงประพฤติผิดซ้ำ (Risk Watch Index)</h3>
-              <p className="text-xs text-slate-400 mt-1">คำนวณสถิติและอัตราการเสพสารซ้ำ ปริมาณชั่วโมงจิตอาสา และความตรงเวลาเพื่อป้องกันความเสี่ยงระดับประเทศ</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-              
-              {/* Dial gauge indicator */}
-              <div className="bg-slate-50 p-6 rounded-xl border border-slate-100 text-center flex flex-col items-center">
-                <div className="relative w-32 h-32 flex items-center justify-center bg-white rounded-full ring-4 ring-emerald-500/10">
-                  <span className="text-3xl font-extrabold text-emerald-600">8.45%</span>
-                  <span className="absolute bottom-3 text-[9px] text-slate-400 uppercase font-bold">อัตราเสี่ยงของแผน</span>
-                </div>
-                <span className="bg-emerald-500 text-white font-extrabold text-[10px] px-3 py-1 rounded-full shadow mt-4">
-                  ระดับความเสี่ยง: ต่ำมาก (เกณฑ์ปลอดภัย)
-                </span>
-              </div>
-
-              <div className="space-y-3.5 text-xs text-slate-600 font-semibold">
-                <div className="flex justify-between border-b border-slate-100 pb-1.5">
-                  <span>ผู้ถูกคุมที่อยู่ในระดับเสี่ยงรุนแรง:</span>
-                  <span className="text-red-600 font-extrabold">1 ราย (เฝ้าสังเกต)</span>
-                </div>
-                <div className="flex justify-between border-b border-slate-100 pb-1.5">
-                  <span>ตรวจหาสารเสพติดเฉลี่ยรายงวด:</span>
-                  <span className="text-emerald-600 font-extrabold">98.45% ปกติ</span>
-                </div>
-                <div className="flex justify-between pb-1.5">
-                  <span>ประสานพาสปอร์ตส่งเสริมร่วมงาน:</span>
-                  <span className="text-[#cca43b] font-extrabold">15 ราย เข้าร่วมครบ</span>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        );
-
+        return <RiskAssessmentView />;
       case "ANALYTICS":
-        return <OfficerDashboard />;
+        return <AnalyticsView />;
+      case "REHABILITATION_PLAN":
+        return <RehabilitationPlan />;
+      case "HEAT_MAP":
+        return <HeatMapView />;
 
       // ==========================================
       // 3. PARTNER ROLE VIEWS
       // ==========================================
       case "PARTNER_DASHBOARD":
       case "ACTIVITY_MANAGEMENT":
+      case "APPLICANTS_MANAGEMENT":
+      case "PARTICIPANTS_MANAGEMENT":
+      case "SERVICE_HOURS":
+      case "REPORTS_STATS":
+      case "DOCUMENTS_ANNOUNCEMENTS":
       case "ATTENDANCE_VERIFICATION":
       case "PERFORMANCE_EVALUATION":
         return <PartnerDashboard />;
@@ -223,8 +169,36 @@ export const AppLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex overflow-hidden">
+    <div className="min-h-screen bg-slate-50 flex overflow-hidden font-sans">
       
+      {/* Mobile/Tablet Sidebar Drawer overlay and sidebar */}
+      {mobileSidebarOpen && (
+        <div className="fixed inset-0 z-50 flex lg:hidden">
+          {/* Backdrop */}
+          <div 
+            onClick={() => setMobileSidebarOpen(false)}
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300"
+          />
+          {/* Sidebar drawer body */}
+          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-[#091535] transition-transform duration-300 transform translate-x-0 shadow-2xl h-full z-10">
+            {/* Close button inside sidebar on mobile */}
+            <div className="absolute top-4 right-4 z-50">
+              <button 
+                onClick={() => setMobileSidebarOpen(false)}
+                className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-colors cursor-pointer"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Sidebar content */}
+            <Sidebar onClose={() => setMobileSidebarOpen(false)} />
+          </div>
+        </div>
+      )}
+
       {/* Desktop Sidebar (Left Panel) */}
       <div className="hidden lg:block shrink-0">
         <Sidebar />
@@ -234,7 +208,7 @@ export const AppLayout: React.FC = () => {
       <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
         
         {/* Workspace Shared Header */}
-        <Header />
+        <Header onToggleSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)} />
 
         {/* Dynamic Inner Viewport */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">

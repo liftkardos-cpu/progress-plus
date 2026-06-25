@@ -16,6 +16,8 @@ interface AppContextProps {
   currentView: string;
   probationerProfile: ProfileData;
   probationers: ProfileData[];
+  probationersList: ProfileData[];
+  selectedProbationerId: string;
   activities: Activity[];
   appointments: Appointment[];
   notifications: NotificationItem[];
@@ -28,10 +30,12 @@ interface AppContextProps {
   setIsLoggedIn: (loggedIn: boolean) => void;
   setCurrentView: (view: string) => void;
   updateProbationerProfile: (profile: ProfileData) => void;
+  selectProbationer: (id: string) => void;
   
   // Actions
   applyForActivity: (activityId: string, probationerId: string) => void;
   approveApplicant: (activityId: string, probationerId: string) => void;
+  approveActivityApplication: (activityId: string, probationerId: string) => void;
   checkInActivity: (activityId: string, probationerId: string, time: string) => void;
   checkOutActivity: (
     activityId: string,
@@ -46,13 +50,19 @@ interface AppContextProps {
     ratings: { responsibility: number; punctuality: number; cooperation: number; behavior: number },
     comment: string
   ) => void;
+  completeActivityApplication: (activityId: string, probationerId: string, ratingObj: any) => void;
+  closeProbationerCase: (probationerId: string) => void;
+  updateBehaviorScore: (probationerId: string, scoreVal: number) => void;
+  submitOnlineReport: (reportName: string, text: string) => void;
   addActivity: (activity: Omit<Activity, "id" | "currentParticipants" | "applicants">) => void;
   deleteActivity: (activityId: string) => void;
   addAppointment: (appointment: Omit<Appointment, "id" | "status">) => void;
   updateAppointmentStatus: (id: string, status: Appointment["status"]) => void;
   addNotification: (title: string, description: string, category: NotificationItem["category"], urgent?: boolean) => void;
   markNotificationRead: (id: string) => void;
+  markAsRead: (id: string) => void;
   clearNotifications: () => void;
+  clearAllNotifications: () => void;
   sendChatMessage: (message: string) => Promise<void>;
   resetPrototypeData: () => void;
 }
@@ -574,6 +584,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Dynamic Data States
   const [probationerProfile, setProbationerProfile] = useState<ProfileData>(INITIAL_PROBATIONER);
   const [probationers, setProbationers] = useState<ProfileData[]>(INITIAL_PROBATIONERS_LIST);
+  const [selectedProbationerId, setSelectedProbationerId] = useState<string>("");
   const [activities, setActivities] = useState<Activity[]>(INITIAL_ACTIVITIES);
   const [appointments, setAppointments] = useState<Appointment[]>(INITIAL_APPOINTMENTS);
   const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
@@ -609,6 +620,87 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setProbationerProfile(updated);
     // Sync with probationers list
     setProbationers(prev => prev.map(p => p.id === updated.id ? updated : p));
+  };
+
+  const selectProbationer = (id: string) => {
+    setSelectedProbationerId(id);
+  };
+
+  const approveActivityApplication = (activityId: string, probationerId: string) => {
+    approveApplicant(activityId, probationerId);
+  };
+
+  const completeActivityApplication = (activityId: string, probationerId: string, ratingObj: any) => {
+    const ratings = {
+      responsibility: ratingObj.responsibility || 5,
+      punctuality: ratingObj.punctuality || 5,
+      cooperation: ratingObj.cooperation || 5,
+      behavior: ratingObj.behavior || 5
+    };
+    submitEvaluation(activityId, probationerId, ratings, ratingObj.comment || "");
+  };
+
+  const closeProbationerCase = (probationerId: string) => {
+    setProbationers(prev => prev.map(p => {
+      if (p.id !== probationerId) return p;
+      return {
+        ...p,
+        status: "พ้นการคุมประพฤติ",
+        behaviorScore: 100
+      };
+    }));
+    if (probationerId === probationerProfile.id) {
+      setProbationerProfile(prev => ({
+        ...prev,
+        status: "พ้นการคุมประพฤติ",
+        behaviorScore: 100
+      }));
+    }
+  };
+
+  const updateBehaviorScore = (probationerId: string, scoreVal: number) => {
+    setProbationers(prev => prev.map(p => {
+      if (p.id !== probationerId) return p;
+      const newScore = Math.min(100, Math.max(0, p.behaviorScore + scoreVal));
+      return {
+        ...p,
+        behaviorScore: newScore
+      };
+    }));
+    if (probationerId === probationerProfile.id) {
+      setProbationerProfile(prev => {
+        const newScore = Math.min(100, Math.max(0, prev.behaviorScore + scoreVal));
+        return {
+          ...prev,
+          behaviorScore: newScore
+        };
+      });
+    }
+  };
+
+  const submitOnlineReport = (reportName: string, text: string) => {
+    setProbationerProfile(prev => {
+      const newCompletedReports = Math.min(prev.totalReports, prev.completedReports + 1);
+      const newDocumentCount = Math.min(prev.totalDocuments, prev.documentCount + 1);
+      return {
+        ...prev,
+        completedReports: newCompletedReports,
+        documentCount: newDocumentCount
+      };
+    });
+    addNotification(
+      "ยื่นรายงานตัวออนไลน์สำเร็จ",
+      `รายงานตัวประจำรอบ '${reportName}' ของคุณได้รับการบันทึกแล้ว รอยืนยันความประพฤติจากเจ้าหน้าที่คุมประพฤติ`,
+      "รายงานตัว"
+    );
+  };
+
+  const markAsRead = (id: string) => {
+    markNotificationRead(id);
+  };
+
+  const clearAllNotifications = () => {
+    clearNotifications();
   };
 
   // 1. Apply for Activity
@@ -949,6 +1041,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         currentView,
         probationerProfile,
         probationers,
+        probationersList: probationers,
+        selectedProbationerId,
         activities,
         appointments,
         notifications,
@@ -959,18 +1053,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setIsLoggedIn,
         setCurrentView,
         updateProbationerProfile,
+        selectProbationer,
         applyForActivity,
         approveApplicant,
+        approveActivityApplication,
         checkInActivity,
         checkOutActivity,
         submitEvaluation,
+        completeActivityApplication,
+        closeProbationerCase,
+        updateBehaviorScore,
+        submitOnlineReport,
         addActivity,
         deleteActivity,
         addAppointment,
         updateAppointmentStatus,
         addNotification,
         markNotificationRead,
+        markAsRead,
         clearNotifications,
+        clearAllNotifications,
         sendChatMessage,
         resetPrototypeData
       }}
