@@ -32,7 +32,7 @@ async function startServer() {
       const { message, history, context } = req.body;
       if (!ai) {
         return res.json({
-          text: `สวัสดีค่ะคุณสมชาย ยินดีต้อนรับสู่บริการแชทบอทอัจฉริยะ (Smart Probation AI Assistant) นะคะ 
+          text: `สวัสดีค่ะคุณสมชาย ยินดีต้อนรับสู่บริการแชทบอทอัจฉริยะ (PROGRESS+ AI Assistant) นะคะ 
 
 ⚠️ (ขณะนี้ระบบกำลังรันในโหมดสาธิต เนื่องจากยังไม่ได้กำหนดคีย์ GEMINI_API_KEY ในแผงควบคุม Secrets)
 
@@ -46,7 +46,7 @@ async function startServer() {
       }
 
       // Format a prompt with context
-      const systemInstruction = `คุณคือ "Smart Probation AI Assistant" ผู้ช่วยอัจฉริยะสำหรับระบบคุมประพฤติอัจฉริยะ (Smart Probation Ecosystem) ประเทศไทย
+      const systemInstruction = `คุณคือ "PROGRESS+ AI Assistant" ผู้ช่วยอัจฉริยะสำหรับระบบ "PROGRESS+ : ก้าวใหม่ สู่โอกาสใหม่" ประเทศไทย
 คุณมีหน้าที่ตอบคำถาม ให้คำแนะนำ และช่วยเหลือผู้ใช้งาน (ผู้ถูกคุมประพฤติ เจ้าหน้าที่ และหน่วยงานภาคี)
 ข้อมูลบริบทของผู้ใช้งานปัจจุบัน: ${JSON.stringify(context || {})}
 จงตอบคำถามผู้ใช้ด้วยภาษาไทยที่สุภาพ เป็นมิตร อบอุ่น มีวุฒิภาวะ ให้เกียรติ และให้คำแนะนำในเชิงสนับสนุนเพื่อการฟื้นฟูพัฒนาคุณภาพชีวิตและการกลับคืนสู่สังคมอย่างยั่งยืน

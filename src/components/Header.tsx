@@ -35,10 +35,10 @@ export const Header: React.FC<{ onToggleSidebar?: () => void }> = ({ onToggleSid
         return {
           title: (
             <h1 className="text-sm sm:text-base md:text-lg lg:text-xl font-black text-[#0f2d59] tracking-wider font-sans">
-              SMART <span className="text-blue-600">PROBATION</span> ECOSYSTEM
+              PROGRESS+ <span className="text-blue-600">: ก้าวใหม่ สู่โอกาสใหม่</span>
             </h1>
           ),
-          subtitle: "ระบบบริหารงานคุมประพฤติอัจฉริยะ เพื่อการฟื้นฟูและคืนคนดีสู่สังคม",
+          subtitle: "แพลตฟอร์มดิจิทัลอัจฉริยะเพื่อการฟื้นฟู พัฒนศักยภาพ และคืนคนดีสู่สังคมอย่างยั่งยืน",
         };
       case "VOLUNTEER":
         return {
@@ -81,7 +81,7 @@ export const Header: React.FC<{ onToggleSidebar?: () => void }> = ({ onToggleSid
         return {
           title: (
             <h1 className="text-sm sm:text-base md:text-lg lg:text-xl font-black text-[#0f2d59] tracking-wider font-sans">
-              SMART <span className="text-blue-600">PROBATION</span> ECOSYSTEM
+              PROGRESS+ <span className="text-blue-600">: ก้าวใหม่ สู่โอกาสใหม่</span>
             </h1>
           ),
           subtitle: "ระบบแจ้งเตือน ติดตามทุกการแจ้งเตือนสำคัญของคุณแบบเรียลไทม์",
@@ -108,10 +108,10 @@ export const Header: React.FC<{ onToggleSidebar?: () => void }> = ({ onToggleSid
         return {
           title: (
             <h1 className="text-sm sm:text-base md:text-lg lg:text-xl font-black text-[#0f2d59] tracking-wider font-sans">
-              SMART <span className="text-blue-600">PROBATION</span> ECOSYSTEM
+              PROGRESS+ <span className="text-blue-600">: ก้าวใหม่ สู่โอกาสใหม่</span>
             </h1>
           ),
-          subtitle: "ระบบบริหารงานคุมประพฤติอัจฉริยะ เพื่อการฟื้นฟูและคืนคนดีสู่สังคม",
+          subtitle: "แพลตฟอร์มดิจิทัลอัจฉริยะเพื่อการฟื้นฟู พัฒนศักยภาพ และคืนคนดีสู่สังคมอย่างยั่งยืน",
         };
     }
   };
@@ -201,14 +201,24 @@ export const Header: React.FC<{ onToggleSidebar?: () => void }> = ({ onToggleSid
           <Menu className="w-6 h-6" />
         </button>
 
-        {/* Text details */}
-        <div>
-          <div className="flex items-center space-x-2">
-            {headerInfo.title}
+        {/* Logo and Text details */}
+        <div className="flex items-center space-x-2.5">
+          <div className="w-9 h-9 rounded-lg border border-[#cca43b]/20 bg-[#001D3D] flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+            <img
+              src="/src/assets/images/progress_logo_with_text_1782386959224.jpg"
+              alt="PROGRESS+ Logo"
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
           </div>
-          <p className="text-[11.5px] font-medium text-slate-500 mt-0.5 hidden md:block">
-            {headerInfo.subtitle}
-          </p>
+          <div>
+            <div className="flex items-center space-x-2">
+              {headerInfo.title}
+            </div>
+            <p className="text-[11.5px] font-medium text-slate-500 mt-0.5 hidden md:block">
+              {headerInfo.subtitle}
+            </p>
+          </div>
         </div>
       </div>
 

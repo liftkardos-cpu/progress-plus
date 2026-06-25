@@ -209,15 +209,15 @@ export const OnlineReportForm: React.FC = () => {
                     <div className="grid grid-cols-2 gap-4 text-slate-500 text-[11px] font-semibold">
                       <div>
                         <span>พิกัด GPS ละติจูด:</span>
-                        <span className="font-mono text-slate-700 block font-bold">14.0725° N</span>
+                        <span className="font-mono text-slate-700 block font-bold">7.1476° N</span>
                       </div>
                       <div>
                         <span>ลองจิจูด:</span>
-                        <span className="font-mono text-slate-700 block font-bold">100.6189° E</span>
+                        <span className="font-mono text-slate-700 block font-bold">100.6128° E</span>
                       </div>
                       <div className="col-span-2">
                         <span>สถานที่ได้รับการตรวจประทับ:</span>
-                        <span className="text-emerald-600 block font-bold">✓ อำเภอคลองหลวง จังหวัดปทุมธานี (รัศมีใกล้บ้านพักจริง)</span>
+                        <span className="text-emerald-600 block font-bold">✓ อำเภอเมืองสงขลา จังหวัดสงขลา (รัศมีใกล้บ้านพักจริง)</span>
                       </div>
                     </div>
                   </div>

@@ -12,7 +12,7 @@ export const GovBanner: React.FC = () => {
             โอกาสคือการเริ่มต้นใหม่ เราเชื่อว่า...<span className="text-[#cca43b]">คุณทำได้</span>
           </p>
           <p className="text-slate-400 text-[10px] mt-0.5 tracking-wider uppercase font-mono">
-            Smart Probation Rehabilitation Initiative • Department of Probation
+            PROGRESS+ Rehabilitation Initiative • Department of Probation
           </p>
         </div>
         <span className="text-3xl md:text-4xl text-[#cca43b] font-serif leading-none">”</span>

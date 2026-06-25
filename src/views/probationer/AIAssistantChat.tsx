@@ -63,7 +63,7 @@ export const AIAssistantChat: React.FC = () => {
                 <Sparkles className="w-5 h-5 text-[#cca43b]" />
               </div>
               <div>
-                <h4 className="text-xs font-extrabold text-white">Smart Probation AI Agent</h4>
+                <h4 className="text-xs font-extrabold text-white">PROGRESS+ AI Agent</h4>
                 <p className="text-[10px] text-[#cca43b] font-medium">เชื่อมต่อ AI Gemini Engine (Online)</p>
               </div>
             </div>

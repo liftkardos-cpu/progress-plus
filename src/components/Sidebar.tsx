@@ -87,28 +87,14 @@ export const Sidebar: React.FC<{ onClose?: () => void; className?: string }> = (
       {/* Brand Header with Seal Logo */}
       <div className="p-5 flex flex-col items-center text-center border-b border-blue-900/40 bg-[#060e26]">
         <div className="relative mb-3 flex items-center justify-center">
-          {/* Circular yellow border outer, then dark blue inner */}
-          <div className="w-16 h-16 bg-[#001D3D] rounded-full border-2 border-blue-400 flex items-center justify-center shadow-lg relative p-1">
-            {/* Custom vector scales of justice/seal emblem resembling the official seal */}
-            <svg viewBox="0 0 100 100" className="w-full h-full text-blue-300 fill-current">
-              <circle cx="50" cy="50" r="45" fill="none" stroke="#60a5fa" strokeWidth="1.5" strokeDasharray="2,2" />
-              {/* Outer seal decorative lines */}
-              <circle cx="50" cy="50" r="38" fill="none" stroke="#60a5fa" strokeWidth="1" />
-              {/* Scales Beam */}
-              <path d="M20,45 Q50,38 80,45 L80,43 Q50,36 20,43 Z" fill="#60a5fa" />
-              {/* Pillar representing traditional architecture */}
-              <path d="M48,72 L52,72 L52,35 L48,35 Z" fill="#3b82f6" />
-              <path d="M42,75 L58,75 L58,72 L42,72 Z" fill="#60a5fa" />
-              <path d="M45,35 L55,35 L50,22 Z" fill="#60a5fa" />
-              {/* Left Pan */}
-              <line x1="25" y1="44" x2="18" y2="58" stroke="#3b82f6" strokeWidth="1" />
-              <line x1="25" y1="44" x2="32" y2="58" stroke="#3b82f6" strokeWidth="1" />
-              <path d="M15,58 L35,58 Q25,64 15,58 Z" fill="#60a5fa" />
-              {/* Right Pan */}
-              <line x1="75" y1="44" x2="68" y2="58" stroke="#3b82f6" strokeWidth="1" />
-              <line x1="75" y1="44" x2="82" y2="58" stroke="#3b82f6" strokeWidth="1" />
-              <path d="M65,58 L85,58 Q75,64 65,58 Z" fill="#60a5fa" />
-            </svg>
+          {/* Circular border outer, then dark blue inner */}
+          <div className="w-16 h-16 bg-[#001D3D] rounded-full border-2 border-[#cca43b]/60 flex items-center justify-center shadow-lg relative overflow-hidden p-0.5">
+            <img
+              src="/src/assets/images/progress_logo_with_text_1782386959224.jpg"
+              alt="PROGRESS+ Logo"
+              className="w-full h-full object-cover rounded-full"
+              referrerPolicy="no-referrer"
+            />
           </div>
         </div>
         <h2 className="text-sm font-bold tracking-wide text-white">กรมคุมประพฤติ</h2>

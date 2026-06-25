@@ -135,7 +135,7 @@ export const ProbationerDashboard: React.FC = () => {
           
           <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
             <div className="text-xs text-slate-500">
-              <span className="font-semibold text-slate-700">เวลา 08:30 น.</span> (สำนักงานปทุมธานี)
+              <span className="font-semibold text-slate-700">เวลา 08:30 น.</span> (สำนักงานสงขลา)
             </div>
             <button
               onClick={() => setCurrentView("ONLINE_REPORT")}

@@ -240,60 +240,48 @@ export const SmartVolunteer: React.FC = () => {
           {/* Simulated Geographic Location Map (Page 5) */}
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
             <h3 className="text-xs font-bold text-slate-800 uppercase tracking-widest border-b border-slate-100 pb-2 flex items-center justify-between">
-              <span>แผนที่กิจกรรมใกล้เคียง</span>
-              <span className="text-[10px] bg-red-100 text-red-800 px-2 py-0.5 rounded-full font-bold">GPS: ปทุมธานี</span>
+              <span>แผนที่กิจกรรมบริการสังคมจริง</span>
+              <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">GPS: ม.ทักษิณ สงขลา</span>
             </h3>
             
-            {/* Visual mockup map canvas wrapper */}
-            <div className="relative h-64 bg-sky-50 border border-slate-200 rounded-xl overflow-hidden shadow-inner flex items-center justify-center">
+            {/* Real Google Maps iframe embed */}
+            <div className="relative h-72 bg-slate-100 border border-slate-200 rounded-xl overflow-hidden shadow-inner">
+              <iframe
+                title="Google Map Thaksin University Songkhla"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3960.05342738951!2d100.61280327499732!3d7.147648316130456!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x304d2843ff451525%3A0xda5f190678fdf3f0!2z4Lih4Lir4Liy4Lin4Li04Lii4Liy4Lil4Lix4Lii4LiX4Lix4LiB4Lip4Li04LiZ!5e0!3m2!1sth!2sth!4v1719290000000!5m2!1sth!2sth"
+                className="w-full h-full border-0"
+                allowFullScreen={false}
+                loading="lazy"
+                referrerPolicy="no-referrer"
+              />
               
-              {/* Fake roads and rivers lines drawn using grid */}
-              <div className="absolute inset-0 opacity-20">
-                <div className="absolute top-1/2 left-0 w-full h-1 bg-yellow-400" />
-                <div className="absolute top-0 left-1/3 w-1.5 h-full bg-blue-500" />
-                <div className="absolute top-1/4 left-0 w-full h-0.5 bg-slate-300" />
-                <div className="absolute top-0 left-2/3 w-0.5 h-full bg-slate-300" />
+              {/* Floating indicators */}
+              <div className="absolute top-2.5 left-2.5 bg-[#031d44]/95 backdrop-blur-md text-[10px] font-bold text-white px-3 py-1.5 rounded-lg shadow-md border border-[#cca43b]/20 flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5 text-[#cca43b]" />
+                <span>พิกัดรอบ มหาวิทยาลัยทักษิณ จ.สงขลา</span>
               </div>
+            </div>
 
-              {/* Thailand Pathum Thani area label */}
-              <span className="absolute top-3 left-3 bg-white/80 backdrop-blur-sm text-[9px] font-bold text-slate-500 px-2 py-1 rounded shadow-sm">
-                อ.คลองหลวง จ.ปทุมธานี
-              </span>
-
-              {/* Marker pin 1: Temple */}
-              <div className="absolute top-1/3 left-1/4 flex flex-col items-center">
-                <div className="p-1.5 bg-red-600 text-white rounded-full shadow-lg border-2 border-white animate-bounce">
-                  <MapPin className="w-3 h-3" />
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-2 text-xs">
+              <span className="font-bold text-[#031d44] block">📍 จุดทำกิจกรรมที่ระบุในแผนที่ล่าสุด:</span>
+              <div className="grid grid-cols-1 gap-1.5 text-[11px] font-semibold text-slate-600">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-red-500 block shrink-0" />
+                  <span>วัดเขารูปช้าง (0.5 กม. จาก ม.ทักษิณ)</span>
                 </div>
-                <span className="bg-white px-1.5 py-0.5 rounded text-[8px] font-bold shadow-sm text-slate-700 mt-1">วัดพระธรรมกาย</span>
-              </div>
-
-              {/* Marker pin 2: School */}
-              <div className="absolute top-2/3 left-1/2 flex flex-col items-center">
-                <div className="p-1.5 bg-[#cca43b] text-white rounded-full shadow-lg border-2 border-white">
-                  <MapPin className="w-3 h-3" />
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-yellow-500 block shrink-0" />
+                  <span>โรงเรียนวัดเขารูปช้าง (0.8 กม. จาก ม.ทักษิณ)</span>
                 </div>
-                <span className="bg-white px-1.5 py-0.5 rounded text-[8px] font-bold shadow-sm text-slate-700 mt-1">ร.ร.คลองหลวง</span>
-              </div>
-
-              {/* Marker pin 3: Park */}
-              <div className="absolute top-1/4 left-2/3 flex flex-col items-center">
-                <div className="p-1.5 bg-emerald-600 text-white rounded-full shadow-lg border-2 border-white">
-                  <MapPin className="w-3 h-3" />
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#1b439c] block shrink-0" />
+                  <span>หาดสมิหลา / หาดชลาทัศน์ (5.2 กม.)</span>
                 </div>
-                <span className="bg-white px-1.5 py-0.5 rounded text-[8px] font-bold shadow-sm text-slate-700 mt-1">สวนสาธารณะ</span>
               </div>
-
-              {/* ZOOM CONTROLS */}
-              <div className="absolute bottom-3 right-3 flex flex-col space-y-1">
-                <button onClick={() => alert("🔍 ซูมเข้าแผนที่สำเร็จ")} className="w-6 h-6 bg-white rounded border border-slate-200 text-xs font-bold text-slate-700 flex items-center justify-center hover:bg-slate-50 shadow-sm">+</button>
-                <button onClick={() => alert("🔍 ซูมออกแผนที่สำเร็จ")} className="w-6 h-6 bg-white rounded border border-slate-200 text-xs font-bold text-slate-700 flex items-center justify-center hover:bg-slate-50 shadow-sm">-</button>
-              </div>
-
             </div>
 
             <p className="text-[10px] text-slate-400 font-semibold text-center leading-relaxed">
-              * แฟลตฟอร์มระบุพิกัดอัตโนมัติรอบที่อยู่อาศัยของคุณในรัศมี 15 กิโลเมตร
+              * ข้อมูลอ้างอิงจากบริการพิกัด Google Maps จริง ในเขต อ.เมืองสงขลา จ.สงขลา
             </p>
           </div>
 

@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useApp } from "../context/AppContext";
 import { UserRole } from "../types";
+import { AnimatePresence, motion } from "motion/react";
 import { 
   Eye, 
   EyeOff, 
@@ -15,10 +16,23 @@ import {
   HelpCircle,
   Sparkles,
   ChevronRight,
+  ChevronLeft,
   ClipboardCheck,
   CheckCircle2,
   Building,
-  Key
+  Key,
+  X,
+  Briefcase,
+  Award,
+  MapPin,
+  QrCode,
+  MessageSquare,
+  CheckSquare,
+  ChevronDown,
+  ChevronUp,
+  Info,
+  ArrowRight,
+  Shield
 } from "lucide-react";
 
 export const LoginView: React.FC = () => {
@@ -29,6 +43,70 @@ export const LoginView: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isDemoOpen, setIsDemoOpen] = useState(true);
+  const [isManualOpen, setIsManualOpen] = useState(false);
+  const [manualActiveTab, setManualActiveTab] = useState<"probationer" | "officer" | "partner" | "faq">("probationer");
+  const [activeFaq, setActiveFaq] = useState<number | null>(null);
+
+  const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
+
+  const creators = [
+    {
+      name: "นายเอกประวีร์ แสงคง",
+      studentId: "6711010186",
+      gradient: "from-amber-500/10 to-yellow-600/10",
+      borderColor: "border-amber-500/20",
+      textAccent: "text-amber-700",
+      avatarInitials: "EP",
+      imageSrc: "/src/assets/images/6711010186.jpg"
+    },
+    {
+      name: "นางสาวชลิดา ขุนแก้ว",
+      studentId: "6711010272",
+      gradient: "from-blue-500/10 to-[#001D3D]/10",
+      borderColor: "border-blue-500/20",
+      textAccent: "text-blue-700",
+      avatarInitials: "CL",
+      imageSrc: "/src/assets/images/student_6711010272_1782390537646.jpg"
+    },
+    {
+      name: "นางสาวณัจยา ศรีมณี",
+      studentId: "6711010080",
+      gradient: "from-purple-500/10 to-indigo-600/10",
+      borderColor: "border-purple-500/20",
+      textAccent: "text-purple-700",
+      avatarInitials: "NJ",
+      imageSrc: "/src/assets/images/6711010080.jpg"
+    },
+    {
+      name: "นางสาวอลิชาเฟียร์ สามะ",
+      studentId: "6711010476",
+      gradient: "from-rose-500/10 to-pink-600/10",
+      borderColor: "border-rose-500/20",
+      textAccent: "text-rose-700",
+      avatarInitials: "AF",
+      imageSrc: "/src/assets/images/6711010476.jpg"
+    },
+    {
+      name: "นางสาวศรุตา แซ่โอ้ว",
+      studentId: "6711010438",
+      gradient: "from-emerald-500/10 to-teal-600/10",
+      borderColor: "border-emerald-500/20",
+      textAccent: "text-emerald-700",
+      avatarInitials: "SR",
+      imageSrc: "/src/assets/images/6711010438.jpg"
+    }
+  ];
+
+  const [activeCreatorIdx, setActiveCreatorIdx] = useState(0);
+  const [isCreatorAutoplay, setIsCreatorAutoplay] = useState(true);
+
+  useEffect(() => {
+    if (!isCreatorAutoplay) return;
+    const interval = setInterval(() => {
+      setActiveCreatorIdx((prev) => (prev + 1) % 5);
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [isCreatorAutoplay]);
 
   // Auto-fill mock login details for demonstration
   const handleSimulateLogin = (role: UserRole, email: string, pass: string) => {
@@ -54,7 +132,7 @@ export const LoginView: React.FC = () => {
     setIsLoggedIn(true);
     addNotification(
       "เข้าสู่ระบบสำเร็จ",
-      `ยินดีต้อนรับเข้าสู่ระบบ SMART PROBATION ECOSYSTEM`,
+      `ยินดีต้อนรับเข้าสู่ระบบ PROGRESS+ : ก้าวใหม่ สู่โอกาสใหม่`,
       "ระบบ"
     );
   };
@@ -130,22 +208,13 @@ export const LoginView: React.FC = () => {
             
             {/* Top Thai Government Seal and department names */}
             <div className="flex items-center space-x-3.5">
-              {/* High fidelity SVG of Department of Probation Emblem */}
-              <div className="w-14 h-14 shrink-0 shadow-sm">
-                <svg viewBox="0 0 100 100" className="w-full h-full select-none">
-                  <circle cx="50" cy="50" r="48" fill="#1e3a8a" stroke="#d97706" strokeWidth="2.5" />
-                  <circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" strokeWidth="1" strokeDasharray="2,2" />
-                  <circle cx="50" cy="50" r="40" fill="none" stroke="#d97706" strokeWidth="1.5" />
-                  {/* Thai Sacred Emblem (Trisula & Scales representation) */}
-                  <path d="M50 18 C50 18, 56 32, 56 42 C56 50, 50 54, 50 54 C50 54, 44 50, 44 42 C44 32, 50 18, 50 18 Z" fill="#ffffff" stroke="#d97706" strokeWidth="1" />
-                  <path d="M50 25 C50 25, 53 34, 53 41 C53 46, 50 49, 50 49 C50 49, 47 46, 47 41 C47 34, 50 25, 50 25 Z" fill="#d97706" />
-                  {/* Scales base inside the circle */}
-                  <path d="M30 65 L70 65 M50 54 L50 78 M35 78 L65 78" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
-                  {/* Wings of justice */}
-                  <path d="M30 45 Q40 45 44 42 Q40 50 30 52 Z" fill="#d97706" stroke="#ffffff" strokeWidth="1" />
-                  <path d="M70 45 Q60 45 56 42 Q60 50 70 52 Z" fill="#d97706" stroke="#ffffff" strokeWidth="1" />
-                  <path d="M22 72 Q50 82 78 72" fill="none" stroke="#ffffff" strokeWidth="1" />
-                </svg>
+              <div className="w-14 h-14 shrink-0 shadow-md bg-[#001D3D] rounded-full border border-[#cca43b]/40 overflow-hidden p-0.5">
+                <img
+                  src="/src/assets/images/progress_logo_with_text_1782386959224.jpg"
+                  alt="PROGRESS+ Logo"
+                  className="w-full h-full object-cover rounded-full"
+                  referrerPolicy="no-referrer"
+                />
               </div>
               
               <div className="space-y-0.5">
@@ -157,11 +226,11 @@ export const LoginView: React.FC = () => {
             {/* Heading Titles */}
             <div className="space-y-2">
               <h1 className="text-4xl lg:text-5xl font-black text-[#031d44] tracking-tight leading-none uppercase">
-                SMART PROBATION
-                <span className="block mt-1">ECOSYSTEM</span>
+                PROGRESS+
+                <span className="block mt-2 text-2xl lg:text-3xl text-blue-600 font-black normal-case">ก้าวใหม่ สู่โอกาสใหม่</span>
               </h1>
-              <p className="text-sm font-medium text-slate-700">
-                ระบบบริหารงานคุมประพฤติอัจฉริยะ เพื่อการฟื้นฟูและคืนคนดีสู่สังคม
+              <p className="text-sm font-semibold text-slate-700 leading-relaxed">
+                แพลตฟอร์มดิจิทัลอัจฉริยะเพื่อการฟื้นฟู พัฒนศักยภาพ และคืนคนดีสู่สังคมอย่างยั่งยืน
               </p>
             </div>
 
@@ -369,10 +438,22 @@ export const LoginView: React.FC = () => {
             
             <div className="bg-white rounded-[32px] p-8 lg:p-10 shadow-xl border border-white/60 max-w-[460px] w-full space-y-6 relative z-10">
               
+              {/* Form logo */}
+              <div className="flex justify-center -mb-2">
+                <div className="w-16 h-16 bg-[#001D3D] rounded-2xl border border-[#cca43b]/30 flex items-center justify-center p-0.5 shadow-md relative overflow-hidden">
+                  <img
+                    src="/src/assets/images/progress_logo_with_text_1782386959224.jpg"
+                    alt="PROGRESS+ Logo"
+                    className="w-full h-full object-cover rounded-xl"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+              </div>
+              
               {/* Form header titles */}
               <div className="text-center space-y-1.5">
                 <h2 className="text-3xl font-black text-slate-900 tracking-tight">เข้าสู่ระบบ</h2>
-                <p className="text-xs font-bold text-blue-800 uppercase font-mono tracking-wider">SMART PROBATION ECOSYSTEM</p>
+                <p className="text-xs font-bold text-blue-800 uppercase font-sans tracking-wider">PROGRESS+ : ก้าวใหม่ สู่โอกาสใหม่</p>
                 <p className="text-xs font-medium text-slate-400">กรุณาเข้าสู่ระบบเพื่อใช้งานระบบ</p>
               </div>
 
@@ -599,7 +680,8 @@ export const LoginView: React.FC = () => {
               <div className="pt-2 flex justify-center">
                 <button
                   type="button"
-                  onClick={() => alert("📖 เปิดคู่มือการสอนใช้งานระบบสารสนเทศคุมประพฤติอัจฉริยะ (Smart Probation PDF) สำหรับประชาชนและหน่วยงานภาคีเครือข่ายเรียบร้อย")}
+                  id="btn-user-manual"
+                  onClick={() => setIsManualOpen(true)}
                   className="text-xs font-bold text-slate-500 hover:text-blue-600 flex items-center space-x-1.5 transition-colors cursor-pointer"
                 >
                   <BookOpen className="w-4 h-4 text-slate-400" />
@@ -616,6 +698,140 @@ export const LoginView: React.FC = () => {
       </div>
 
       {/* =============================================================
+          CREATORS & INNOVATORS SECTION (Auto-sliding Carousel)
+          ============================================================= */}
+      <div className="w-full bg-slate-50 border-t border-slate-200/60 py-10 px-4 md:px-10">
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-6">
+            <span className="text-[10px] bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-bold tracking-wider uppercase">คณะผู้จัดทำนวัตกรรม</span>
+            <h3 className="text-base md:text-lg font-black text-[#031d44] tracking-tight mt-2">
+              ผู้คิดค้นและพัฒนาระบบนิเวศอัจฉริยะ PROGRESS+
+            </h3>
+            <p className="text-xs text-slate-500 font-semibold mt-1">
+              สาขาการบริหารงานตำรวจและกระบวนการยุติธรรม วิทยาลัยการจัดการเพื่อการพัฒนา มหาวิทยาลัยทักษิณ
+            </p>
+          </div>
+
+          {/* Carousel Card */}
+          <div 
+            className="bg-white rounded-3xl border border-slate-200/80 shadow-md p-5 md:p-6 transition-all relative overflow-hidden"
+            onMouseEnter={() => setIsCreatorAutoplay(false)}
+            onMouseLeave={() => setIsCreatorAutoplay(true)}
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeCreatorIdx}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                className="flex flex-col md:flex-row items-center gap-6"
+              >
+                {/* Creator Avatar Cylinder */}
+                <div className="relative shrink-0">
+                  <div className={`w-28 h-28 md:w-32 md:h-32 rounded-2xl bg-gradient-to-tr ${creators[activeCreatorIdx].gradient} border-2 ${creators[activeCreatorIdx].borderColor} flex items-center justify-center shadow-md relative overflow-hidden`}>
+                    {!imageErrors[activeCreatorIdx] ? (
+                      <img 
+                        src={creators[activeCreatorIdx].imageSrc} 
+                        alt={creators[activeCreatorIdx].name}
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          if (target.src.includes('student_')) {
+                            // Try loading by student ID directly if custom path fails
+                            target.src = `/src/assets/images/${creators[activeCreatorIdx].studentId}.jpg`;
+                          } else {
+                            setImageErrors(prev => ({ ...prev, [activeCreatorIdx]: true }));
+                          }
+                        }}
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div className="text-center select-none">
+                        <span className={`text-2xl md:text-3xl font-black ${creators[activeCreatorIdx].textAccent}`}>
+                          {creators[activeCreatorIdx].avatarInitials}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Absolute Badge for Student ID */}
+                  <div className="absolute -top-1.5 -right-1.5 bg-[#031d44] border border-[#cca43b]/40 text-white rounded-full p-1.5 shadow-sm flex items-center justify-center">
+                    <Award className="w-3.5 h-3.5 text-[#cca43b]" />
+                  </div>
+                </div>
+
+                {/* Creator Metadata */}
+                <div className="flex-1 text-center md:text-left space-y-3">
+                  <div>
+                    <div className="space-y-2">
+                      <h4 className="text-base md:text-lg font-bold text-slate-800 flex flex-col md:flex-row md:items-center gap-1 md:gap-3 justify-center md:justify-start">
+                        <span className="font-bold text-slate-400 text-xs md:text-sm uppercase tracking-wider block md:inline-block w-20">ชื่อ-สกุล:</span> 
+                        <span className="font-black text-[#031d44]">{creators[activeCreatorIdx].name}</span>
+                      </h4>
+                      <p className="text-sm font-bold text-slate-600 flex flex-col md:flex-row md:items-center gap-1 md:gap-3 justify-center md:justify-start">
+                        <span className="font-bold text-slate-400 text-xs md:text-sm uppercase tracking-wider block md:inline-block w-20">รหัสนิสิต:</span> 
+                        <span className="font-mono text-blue-700 font-black bg-blue-50 px-2.5 py-0.5 rounded-md border border-blue-100">{creators[activeCreatorIdx].studentId}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider pt-1">
+                    สาขาการบริหารงานตำรวจและกระบวนการยุติธรรม วิทยาลัยการจัดการเพื่อการพัฒนา มหาวิทยาลัยทักษิณ
+                  </p>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Manual Navigation Controls */}
+            <div className="flex items-center justify-between mt-5 pt-4 border-t border-slate-100">
+              {/* Left arrow */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCreatorAutoplay(false);
+                  setActiveCreatorIdx((prev) => (prev - 1 + 5) % 5);
+                }}
+                className="p-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-800 transition-colors cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              {/* Dots indicators */}
+              <div className="flex space-x-1.5">
+                {creators.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setIsCreatorAutoplay(false);
+                      setActiveCreatorIdx(idx);
+                    }}
+                    className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                      activeCreatorIdx === idx ? "w-5 bg-[#031d44]" : "w-2 bg-slate-200"
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {/* Right arrow */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCreatorAutoplay(false);
+                  setActiveCreatorIdx((prev) => (prev + 1) % 5);
+                }}
+                className="p-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-800 transition-colors cursor-pointer"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* =============================================================
           FOOTER STRIP (At the very bottom, exactly like image)
           ============================================================= */}
       <div className="bg-[#031d44] text-white py-6 border-t border-blue-950 px-4 md:px-10 mt-auto select-none">
@@ -623,7 +839,7 @@ export const LoginView: React.FC = () => {
           
           {/* Left Block */}
           <div className="text-center lg:text-left">
-            <h4 className="text-xs font-black tracking-wider text-slate-100 uppercase">SMART PROBATION ECOSYSTEM</h4>
+            <h4 className="text-xs font-black tracking-wider text-slate-100 uppercase">PROGRESS+ : ก้าวใหม่ สู่โอกาสใหม่</h4>
             <p className="text-[10px] text-slate-400 font-semibold tracking-wider mt-0.5 uppercase">POWERED BY DEPARTMENT OF PROBATION</p>
           </div>
 
@@ -660,6 +876,432 @@ export const LoginView: React.FC = () => {
 
         </div>
       </div>
+
+      {/* =============================================================
+          INTERACTIVE USER MANUAL MODAL (PROGRESS+ SYSTEM MANUAL)
+          ============================================================= */}
+      <AnimatePresence>
+        {isManualOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[150] flex items-center justify-center p-4 md:p-6"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              transition={{ type: "spring", duration: 0.5 }}
+              className="bg-white rounded-3xl shadow-2xl max-w-5xl w-full border border-slate-100 overflow-hidden flex flex-col max-h-[90vh] md:max-h-[85vh]"
+            >
+              {/* Header */}
+              <div className="bg-[#031d44] p-5 md:p-6 text-white flex items-center justify-between border-b border-blue-900/40 relative overflow-hidden shrink-0">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(30,58,138,0.4),transparent)] pointer-events-none" />
+                <div className="flex items-center space-x-3.5 relative z-10">
+                  <div className="w-12 h-12 rounded-xl bg-slate-900/50 border border-[#cca43b]/40 flex items-center justify-center overflow-hidden shrink-0">
+                    <img
+                      src="/src/assets/images/progress_logo_with_text_1782386959224.jpg"
+                      alt="PROGRESS+ Logo"
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                  <div>
+                    <span className="text-[10px] bg-[#cca43b]/20 text-[#cca43b] px-2 py-0.5 rounded-full font-bold tracking-wider uppercase">SYSTEM MANUAL</span>
+                    <h3 className="text-lg md:text-xl font-black tracking-tight mt-0.5">คู่มือการใช้งานระบบนิเวศอัจฉริยะ PROGRESS+</h3>
+                    <p className="text-xs text-slate-300 font-medium">ก้าวใหม่ สู่โอกาสใหม่ - แนะนำเครื่องมือและการใช้งานอย่างละเอียด</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsManualOpen(false)}
+                  className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-200 hover:text-white transition-all cursor-pointer relative z-10"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Tabs Navigation */}
+              <div className="bg-slate-50 border-b border-slate-200 flex overflow-x-auto scrollbar-none px-4 md:px-6 py-2.5 gap-2 shrink-0">
+                {[
+                  { id: "probationer", label: "ผู้ถูกคุมประพฤติ", icon: User, color: "text-blue-600 bg-blue-50 border-blue-200", activeColor: "bg-blue-600 text-white" },
+                  { id: "officer", label: "เจ้าหน้าที่คุมประพฤติ", icon: Shield, color: "text-amber-600 bg-amber-50 border-amber-200", activeColor: "bg-amber-600 text-white" },
+                  { id: "partner", label: "หน่วยงานบริการสังคม/ภาคี", icon: Building, color: "text-emerald-600 bg-emerald-50 border-emerald-200", activeColor: "bg-emerald-600 text-white" },
+                  { id: "faq", label: "คำถามที่พบบ่อย (FAQ)", icon: HelpCircle, color: "text-violet-600 bg-violet-50 border-violet-200", activeColor: "bg-violet-600 text-white" }
+                ].map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = manualActiveTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => {
+                        setManualActiveTab(tab.id as any);
+                        setActiveFaq(null);
+                      }}
+                      className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                        isActive 
+                          ? `${tab.activeColor} shadow-sm border border-transparent` 
+                          : "text-slate-600 hover:bg-slate-100 border border-slate-200 bg-white"
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span>{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Scrollable Content Container */}
+              <div className="flex-1 overflow-y-auto p-5 md:p-6 space-y-6 bg-slate-50/30">
+                <AnimatePresence mode="wait">
+                  {manualActiveTab === "probationer" && (
+                    <motion.div
+                      key="probationer"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      transition={{ duration: 0.2 }}
+                      className="space-y-6"
+                    >
+                      {/* Top Summary Banner */}
+                      <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 flex items-start space-x-3">
+                        <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                        <div>
+                          <h4 className="text-xs font-bold text-blue-900">สำหรับผู้ถูกคุมประพฤติ (Probationer Portal)</h4>
+                          <p className="text-xs text-slate-600 leading-relaxed mt-1">
+                            เครื่องมือหลักในการปฏิบัติตามคำสั่งศาลแบบออนไลน์ ช่วยให้การสะสมชั่วโมงงานบริการสังคม การรายงานตัว และการมองหาโอกาสงานสร้างชีวิตใหม่เป็นเรื่องง่าย สะดวก ปลอดภัย และโปร่งใส
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Steps Grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {[
+                          {
+                            step: "01",
+                            title: "การนัดหมาย & รายงานตัวออนไลน์",
+                            desc: "หน้าหลักแสดงวันนัดถัดไปอย่างเด่นชัด มีตัวจับเวลาเตือนความจำ ระบบจะอัปเดตอัตโนมัติเมื่อเจ้าหน้าที่นัดหมาย สามารถตรวจสอบประวัติการรายงานตัวย้อนหลังอย่างละเอียดได้ทันที",
+                            icon: Calendar,
+                            tag: "การรายงานตัว",
+                            tagColor: "bg-blue-100 text-blue-700"
+                          },
+                          {
+                            step: "02",
+                            title: "บันทึกและหาตำแหน่งงานบริการสังคม",
+                            desc: "ระบบแสดงความคืบหน้าของชั่วโมงสะสมด้วยวงแหวนสถิติ คุณสามารถค้นหาสถานที่บำเพ็ญประโยชน์ใกล้ตัว ลงทะเบียนจองวันเวลาที่สะดวก และนำเสนอ QR Code บนแอปพลิเคชันให้หน่วยงานสแกนลงเวลาทำความดีอย่างสะดวกสบาย",
+                            icon: Award,
+                            tag: "งานบริการสังคม",
+                            tagColor: "bg-amber-100 text-amber-700"
+                          },
+                          {
+                            step: "03",
+                            title: "โอกาสสร้างงาน (ReStart Job Hub)",
+                            desc: "ศูนย์รวมตำแหน่งงานเฉพาะที่เปิดใจต้อนรับและมอบโอกาสใหม่ให้ผู้ถูกคุมความประพฤติ เลือกคัดกรองงานตามความถนัด สมัครงานได้ทันที และติดตามประวัติการสมัครจากบริษัทภาคีรัฐและเอกชนชั้นนำ",
+                            icon: Briefcase,
+                            tag: "การสร้างอาชีพ",
+                            tagColor: "bg-emerald-100 text-emerald-700"
+                          },
+                          {
+                            step: "04",
+                            title: "ถามตอบอัจฉริยะกับผู้ช่วย AI",
+                            desc: "ปรึกษาข้อมูล ค้นหากฎระเบียบคุมประพฤติ วันนัดหมาย ชั่วโมงคงเหลือ หรือแนะนำสายอาชีพ ตลอด 24 ชั่วโมง โดยพิมพ์ถามตอบกับ PROGRESS+ AI Agent ที่เชื่อมต่อโดยตรงกับระบบประมวลผล Gemini อัจฉริยะ",
+                            icon: Sparkles,
+                            tag: "ระบบ AI อัจฉริยะ",
+                            tagColor: "bg-violet-100 text-violet-700"
+                          }
+                        ].map((item, index) => {
+                          const StepIcon = item.icon;
+                          return (
+                            <div key={index} className="bg-white rounded-2xl p-4 border border-slate-100 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center space-x-2">
+                                    <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700">
+                                      <StepIcon className="w-4 h-4" />
+                                    </div>
+                                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${item.tagColor}`}>{item.tag}</span>
+                                  </div>
+                                  <span className="text-lg font-black text-slate-200 select-none">{item.step}</span>
+                                </div>
+                                <h5 className="text-xs font-bold text-slate-800 mt-1">{item.title}</h5>
+                                <p className="text-xs text-slate-500 leading-relaxed">{item.desc}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Tips Banner */}
+                      <div className="bg-slate-100 rounded-2xl p-4 flex items-center space-x-3.5 border border-slate-200">
+                        <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 shrink-0">
+                          <QrCode className="w-5 h-5" />
+                        </div>
+                        <div className="text-xs">
+                          <p className="font-bold text-slate-800">💡 ข้อแนะนำสำหรับการลงเวลาทำความดีสะสมชั่วโมง:</p>
+                          <p className="text-slate-600 mt-0.5">พกสมาร์ทโฟนของท่านในวันทำกิจกรรม และเปิดหน้า QR Code ส่วนตัวให้เจ้าหน้าที่หน่วยงานภาคีสแกนทั้งก่อนเริ่มงานและหลังจบงานทุกครั้ง เพื่อยืนยันข้อมูลชั่วโมงอย่างถูกต้อง</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {manualActiveTab === "officer" && (
+                    <motion.div
+                      key="officer"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      transition={{ duration: 0.2 }}
+                      className="space-y-6"
+                    >
+                      {/* Top Summary Banner */}
+                      <div className="p-4 rounded-2xl bg-amber-50/50 border border-amber-100 flex items-start space-x-3">
+                        <ShieldCheck className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                        <div>
+                          <h4 className="text-xs font-bold text-amber-900">สำหรับเจ้าหน้าที่คุมประพฤติ (Officer Portal)</h4>
+                          <p className="text-xs text-slate-600 leading-relaxed mt-1">
+                            เครื่องมือยกระดับประสิทธิภาพการทำงานของเจ้าหน้าที่ ช่วยลดขั้นตอนด้านเอกสาร ติดตามความคืบหน้าของผู้ถูกคุมความประพฤติในความดูแล ตรวจสอบหลักฐานพิกัด และส่งต่อความช่วยเหลือแบบบูรณาการ
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Grid Steps */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {[
+                          {
+                            step: "01",
+                            title: "แดชบอร์ดติดตามสถานะคุมประพฤติ",
+                            desc: "ตรวจสอบรายชื่อและระดับความเสี่ยงของผู้ถูกคุมประพฤติทั้งหมดที่อยู่ในความดูแล ดูภาพรวมร้อยละความสำเร็จของชั่วโมงกิจกรรม เพื่อคัดกรองเคสที่มีโอกาสผิดเงื่อนไขได้ล่วงหน้าอย่างแม่นยำ",
+                            icon: Users,
+                            tag: "ระบบติดตามเคส",
+                            tagColor: "bg-blue-100 text-blue-700"
+                          },
+                          {
+                            step: "02",
+                            title: "อนุมัติชั่วโมงบำเพ็ญประโยชน์ออนไลน์",
+                            desc: "เมื่อผู้ถูกคุมประพฤติทำกิจกรรมเสร็จสิ้นและยื่นคำขอ ระบบจะแสดงพิกัด GPS บนแผนที่ และภาพหลักฐานกิจกรรม เจ้าหน้าที่สามารถตรวจสอบความถูกต้องแล้วกดอนุมัติชั่วโมงสะสมเพื่อเชื่อมข้อมูลทันที",
+                            icon: CheckSquare,
+                            tag: "การอนุมัติชั่วโมง",
+                            tagColor: "bg-amber-100 text-amber-700"
+                          },
+                          {
+                            step: "03",
+                            title: "ประเมินความเสี่ยงและส่งต่อเคสฟื้นฟู",
+                            desc: "ประเมินประวัติพฤติกรรมเพื่อวางแนวทางการฟื้นฟูเฉพาะบุคคล ส่งต่อผู้ถูกคุมประพฤติไปยังช่องทางสิทธิบำบัดรักษา หรือส่งต่อไปยังหน่วยงานนายจ้างเพื่อฝึกงานสร้างอาชีพตามเป้าหมายคืนคนดีสู่สังคม",
+                            icon: ChevronRight,
+                            tag: "การฟื้นฟูส่งต่อ",
+                            tagColor: "bg-emerald-100 text-emerald-700"
+                          },
+                          {
+                            step: "04",
+                            title: "ระบบสนทนาความช่วยเหลือ & แชทสด",
+                            desc: "ประสานงานกับผู้ถูกคุมประพฤติหรือตัวแทนหน่วยงานบริการสังคมโดยตรงผ่านหน้าจอแชท เพื่อความสะดวกในการชี้แจงข้อตกลง ตักเตือน หรือแก้ไขปัญหาข้อผิดพลาดได้อย่างรวดเร็ว",
+                            icon: MessageSquare,
+                            tag: "การสื่อสารบูรณาการ",
+                            tagColor: "bg-violet-100 text-violet-700"
+                          }
+                        ].map((item, index) => {
+                          const StepIcon = item.icon;
+                          return (
+                            <div key={index} className="bg-white rounded-2xl p-4 border border-slate-100 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center space-x-2">
+                                    <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700">
+                                      <StepIcon className="w-4 h-4" />
+                                    </div>
+                                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${item.tagColor}`}>{item.tag}</span>
+                                  </div>
+                                  <span className="text-lg font-black text-slate-200 select-none">{item.step}</span>
+                                </div>
+                                <h5 className="text-xs font-bold text-slate-800 mt-1">{item.title}</h5>
+                                <p className="text-xs text-slate-500 leading-relaxed">{item.desc}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {manualActiveTab === "partner" && (
+                    <motion.div
+                      key="partner"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      transition={{ duration: 0.2 }}
+                      className="space-y-6"
+                    >
+                      {/* Top Summary Banner */}
+                      <div className="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100 flex items-start space-x-3">
+                        <Building className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                        <div>
+                          <h4 className="text-xs font-bold text-emerald-900">สำหรับหน่วยงานบริการสังคมและภาคีเครือข่าย (Partner Portal)</h4>
+                          <p className="text-xs text-slate-600 leading-relaxed mt-1">
+                            ช่องทางอำนวยความสะดวกสำหรับองค์กรปกครองส่วนท้องถิ่น วัด โรงเรียน นายจ้าง และหน่วยงานบริการสังคมภาคี ในการบริหารจัดการพื้นที่บำเพ็ญประโยชน์และการโพสต์รับสมัครพนักงาน
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Grid Steps */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {[
+                          {
+                            step: "01",
+                            title: "การประกาศรับสมัครงานบำเพ็ญประโยชน์",
+                            desc: "สร้างตำแหน่งงานบริการสังคม กำหนดจำนวนที่รับ ช่วงเวลาที่ปฏิบัติงาน และหน้าที่รับผิดชอบ เพื่อให้ผู้ถูกคุมความประพฤติในระบบสามารถเลือกค้นหาและลงทะเบียนจองทำความดีสะสมชั่วโมงได้อย่างทั่วถึง",
+                            icon: Briefcase,
+                            tag: "สร้างประกาศกิจกรรม",
+                            tagColor: "bg-blue-100 text-blue-700"
+                          },
+                          {
+                            step: "02",
+                            title: "การสแกนลงเวลาด้วย QR Code ระบบดิจิทัล",
+                            desc: "ใช้แท็บเล็ตหรือสมาร์ทโฟนเข้าหน้าจอบัญชีภาคีเพื่อกดเปิดกล้องสแกน QR Code ประจำตัวของผู้ถูกคุมความประพฤติ เมื่อเริ่มเข้าปฏิบัติงาน และสแกนอีกครั้งเพื่อระบุเวลาสิ้นสุดการบำเพ็ญประโยชน์อย่างแม่นยำ",
+                            icon: QrCode,
+                            tag: "การเช็คชื่อเข้างาน",
+                            tagColor: "bg-amber-100 text-amber-700"
+                          },
+                          {
+                            step: "03",
+                            title: "การส่งแบบประเมินและรายงานพฤติกรรม",
+                            desc: "ประเมินวินัย ความตั้งใจทำงาน และพฤติกรรมทั่วไปของผู้เข้าร่วมบำเพ็ญประโยชน์ โดยกรอกแบบประเมินสั้น ๆ ในระบบ ซึ่งจะส่งรายงานไปให้เจ้าหน้าที่คุมประพฤติพิจารณาประกอบการสะสมชั่วโมงและประเมินผลคุมประพฤติ",
+                            icon: ClipboardCheck,
+                            tag: "การประเมินผลงาน",
+                            tagColor: "bg-emerald-100 text-emerald-700"
+                          },
+                          {
+                            step: "04",
+                            title: "โพสต์ประกาศรับสมัครงานสร้างชีวิตใหม่",
+                            desc: "สำหรับภาคีนายจ้างและบริษัทเอกชนที่เปิดโอกาสให้สิทธิ์พิเศษ สามารถโพสต์โฆษณาจัดหางานสำหรับผู้ใกล้พ้นคุกหรือผู้ที่ประพฤติดีในโปรแกรมฟื้นฟูของกรมคุมประพฤติ เพื่อรับสมัครและคัดสรรบุคลากรฝีมือดี",
+                            icon: Users,
+                            tag: "การร่วมสร้างชีวิตใหม่",
+                            tagColor: "bg-violet-100 text-violet-700"
+                          }
+                        ].map((item, index) => {
+                          const StepIcon = item.icon;
+                          return (
+                            <div key={index} className="bg-white rounded-2xl p-4 border border-slate-100 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center space-x-2">
+                                    <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700">
+                                      <StepIcon className="w-4 h-4" />
+                                    </div>
+                                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${item.tagColor}`}>{item.tag}</span>
+                                  </div>
+                                  <span className="text-lg font-black text-slate-200 select-none">{item.step}</span>
+                                </div>
+                                <h5 className="text-xs font-bold text-slate-800 mt-1">{item.title}</h5>
+                                <p className="text-xs text-slate-500 leading-relaxed">{item.desc}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {manualActiveTab === "faq" && (
+                    <motion.div
+                      key="faq"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      transition={{ duration: 0.2 }}
+                      className="space-y-4"
+                    >
+                      <div className="p-4 rounded-2xl bg-violet-50/50 border border-violet-100 flex items-start space-x-3 mb-2">
+                        <HelpCircle className="w-5 h-5 text-violet-600 shrink-0 mt-0.5" />
+                        <div>
+                          <h4 className="text-xs font-bold text-violet-900">คำถามที่พบบ่อย (FAQs)</h4>
+                          <p className="text-xs text-slate-600 leading-relaxed mt-1">
+                            ไขข้อสงสัยและคำถามเกี่ยวกับการปฏิบัติตน ชั่วโมงบำเพ็ญประโยชน์ และการประสานงานในโครงการ PROGRESS+
+                          </p>
+                        </div>
+                      </div>
+
+                      {[
+                        {
+                          q: "1. ขั้นตอนการลงเวลาทำความดีสะสมชั่วโมงด้วยระบบดิจิทัล ทำอย่างไร?",
+                          a: "ผู้ถูกคุมความประพฤติเข้าสู่ระบบในมือถือ ไปที่แท็บ 'งานบริการสังคม' แล้วกดปุ่มเปิดแสดง QR Code ประจำตัว จากนั้นให้ผู้ประสานงานหน่วยงานบริการสังคมใช้สมาร์ทโฟนสแกนก่อนเริ่มทำกิจกรรม และสแกนซ้ำอีกครั้งหลังทำกิจกรรมเสร็จเพื่อลงบันทึกเวลาทำงานสะสมโดยอัตโนมัติ"
+                        },
+                        {
+                          q: "2. หากติดธุระสำคัญ เจ็บป่วย หรือไม่สามารถไปรายงานตัวตามกำหนดต้องทำอย่างไร?",
+                          a: "ผู้ถูกคุมความประพฤติต้องส่งคำร้องขอเลื่อนกำหนดนัดล่วงหน้าอย่างน้อย 3 วันผ่านแอปพลิเคชัน พร้อมอัปโหลดหลักฐานประกอบ เช่น ใบรับรองแพทย์ หรือกรณีฉุกเฉินให้ประสานงานติดต่อเจ้าหน้าที่คุมประพฤติเจ้าของสำนวนเพื่อทำการนัดหมายรายงานตัวออนไลน์ทดแทนทันที"
+                        },
+                        {
+                          q: "3. ระยะเวลาการตรวจสอบและยืนยันอนุมัติชั่วโมงบำเพ็ญประโยชน์ใช้เวลานานเท่าใด?",
+                          a: "หลังจากหน่วยงานบริการสังคมส่งแบบประเมินและลงเวลาสำเร็จผ่านแอปพลิเคชัน รายงานดิจิทัลจะถูกส่งตรงเข้าแผงงานของเจ้าหน้าที่คุมประพฤติทันที โดยทั่วไปเจ้าหน้าที่จะทำการตรวจสอบพิกัด GPS/ภาพถ่ายหลักฐาน และกดลงนามอนุมัติชั่วโมงภายใน 24-48 ชั่วโมง"
+                        },
+                        {
+                          q: "4. สำหรับภาคีหรือบริษัทเอกชนที่สนใจเข้าร่วมมอบโอกาสงาน มีวิธีลงทะเบียนอย่างไร?",
+                          a: "สามารถติดต่อกองพัฒนาพฤติกรรมผู้ถูกคุมประพฤติ หรือกดสมัครสมาชิกผ่านช่องทาง 'หน่วยงานบริการสังคม/ภาคี' ยื่นกรอกรายละเอียดพร้อมเอกสารจดทะเบียนบริษัท เจ้าหน้าที่จะทำการวิเคราะห์ประวัติและจัดส่งรหัสเข้าใช้งาน (Partner ID) ให้บริษัทเพื่อเปิดประกาศตำแหน่งงานภายใน 5 วันทำการ"
+                        },
+                        {
+                          q: "5. ข้อมูลประวัติการคุมประพฤติและตำแหน่งงานจะถูกเปิดเผยต่อภายนอกหรือไม่?",
+                          a: "ระบบ PROGRESS+ พัฒนาขึ้นโดยมีระบบรักษาความปลอดภัยเคร่งครัดตามกฎหมายคุ้มครองข้อมูลส่วนบุคคล (PDPA) ข้อมูลพฤติกรรมและการทำความผิดจะไม่มีการเปิดเผยต่อสาธารณะ และมีเพียงเจ้าหน้าที่ที่ได้รับมอบสิทธิ์รับผิดชอบสำนวนเท่านั้นที่สามารถเข้าถึงข้อมูลของท่านได้"
+                        }
+                      ].map((faq, idx) => {
+                        const isOpen = activeFaq === idx;
+                        return (
+                          <div key={idx} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:border-slate-300 transition-all">
+                            <button
+                              onClick={() => setActiveFaq(isOpen ? null : idx)}
+                              className="w-full flex items-center justify-between p-4 text-left text-xs font-bold text-slate-800 bg-white hover:bg-slate-50 transition-colors cursor-pointer"
+                            >
+                              <span>{faq.q}</span>
+                              {isOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                            </button>
+                            <AnimatePresence initial={false}>
+                              {isOpen && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: "auto", opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.2 }}
+                                  className="border-t border-slate-100 bg-slate-50/50"
+                                >
+                                  <p className="p-4 text-xs text-slate-600 leading-relaxed">
+                                    {faq.a}
+                                  </p>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Footer / Quick contact */}
+              <div className="bg-slate-50 px-5 md:px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0">
+                <div className="flex items-center space-x-2 text-xs text-slate-500 font-medium">
+                  <ShieldCheck className="w-4.5 h-4.5 text-emerald-600" />
+                  <span>ระบบได้รับมาตรฐานความปลอดภัยระดับพระราชบัญญัติคุ้มครองข้อมูลส่วนบุคคล (PDPA)</span>
+                </div>
+                <div className="flex items-center space-x-3 shrink-0">
+                  <a
+                    href="tel:021414740"
+                    className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 text-[11px] font-bold transition-all cursor-pointer"
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                    <span>โทรด่วนสายตรง</span>
+                  </a>
+                  <button
+                    onClick={() => setIsManualOpen(false)}
+                    className="px-4 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold transition-all cursor-pointer"
+                  >
+                    ปิดคู่มือใช้งาน
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );
