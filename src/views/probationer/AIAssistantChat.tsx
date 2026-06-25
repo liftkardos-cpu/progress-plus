@@ -79,28 +79,30 @@ export const AIAssistantChat: React.FC = () => {
             {chatHistory.map((msg) => (
               <div 
                 key={msg.id} 
-                className={`flex items-start space-x-2.5 ${msg.sender === "USER" ? "justify-end" : "justify-start"}`}
+                className={`flex items-start space-x-2.5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 {/* AI Profile Circle */}
-                {msg.sender === "AI" && (
+                {msg.role === "model" && (
                   <div className="p-1.5 bg-[#00152e] text-[#cca43b] rounded-lg shrink-0 border border-[#cca43b]/20">
                     <Sparkles className="w-4.5 h-4.5" />
                   </div>
                 )}
 
                 <div className={`max-w-[80%] rounded-2xl p-3.5 text-xs leading-relaxed shadow-sm ${
-                  msg.sender === "USER"
+                  msg.role === "user"
                     ? "bg-[#1b439c] text-white rounded-tr-none"
                     : "bg-white text-slate-800 rounded-tl-none border border-slate-200/60 font-medium"
                 }`}>
                   <p className="whitespace-pre-line">{msg.text}</p>
                   <span className="text-[9px] block text-right mt-1.5 opacity-60 font-mono font-bold">
-                    {msg.timestamp}
+                    {msg.timestamp instanceof Date 
+                      ? msg.timestamp.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) 
+                      : new Date(msg.timestamp).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })}
                   </span>
                 </div>
 
                 {/* User Profile Circle */}
-                {msg.sender === "USER" && (
+                {msg.role === "user" && (
                   <img
                     src={probationerProfile.avatarUrl}
                     alt={probationerProfile.name}
