@@ -4,7 +4,7 @@ import { GovBanner } from "../../components/GovBanner";
 import { Briefcase, BookOpen, Star, HelpCircle, ArrowRight, Building, Award, CheckCircle } from "lucide-react";
 
 export const ReStartJobHub: React.FC = () => {
-  const { jobs, courses } = useApp();
+  const { jobs, courses, probationerProfile } = useApp();
   const [appliedJobs, setAppliedJobs] = useState<string[]>([]);
 
   const handleApplyJob = (jobId: string, jobTitle: string) => {
@@ -221,7 +221,7 @@ export const ReStartJobHub: React.FC = () => {
 
               <h4 className="text-xs font-extrabold text-white mt-3">ตำแหน่งงานตรงคุณลักษณะ: <b>ช่างเทคนิคซ่อมบำรุง</b></h4>
               <p className="text-[10px] text-slate-300 mt-1 max-w-xs leading-relaxed">
-                วิเคราะห์ผลงานจากคุณลักษณะการซ่อมแซมสีและพฤติกรรมความตั้งใจของคุณสมชาย เหมาะสมกับตำแหน่งวิชาชีพช่างเทคนิคซ่อมบำรุงมากที่สุด
+                วิเคราะห์ผลงานจากคุณลักษณะการซ่อมแซมสีและพฤติกรรมความตั้งใจของ{probationerProfile?.name || "ท่าน"} เหมาะสมกับตำแหน่งวิชาชีพช่างเทคนิคซ่อมบำรุงมากที่สุด
               </p>
             </div>
 

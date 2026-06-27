@@ -1,3 +1,13 @@
+// ==========================================
+// 🇹🇭 ไฟล์: /src/views/probationer/AIAssistantChat.tsx
+// คำอธิบาย: ห้องแชตถามตอบอัจฉริยะ (AI Assistant Chat) เชื่อมต่อโมเดล AI สำหรับให้ผู้ถูกคุมประพฤติสอบถามข้อมูล
+// โครงสร้างไฟล์:
+//   - ส่วนนำเข้าข้อมูลและไอคอน (Imports)
+//   - คำถามแนะนำด่วน (Quick Suggested Prompts)
+//   - การแสดงประวัติการแชตและข้อความโต้ตอบ (Chat History & UI)
+//   - กล่องข้อความอินพุตและการประมวลผลคำสั่งส่งข้อความ (Chat Input & Processing Logic)
+// ==========================================
+
 import React, { useState, useRef, useEffect } from "react";
 import { useApp } from "../../context/AppContext";
 import { GovBanner } from "../../components/GovBanner";
@@ -14,7 +24,7 @@ export const AIAssistantChat: React.FC = () => {
     "เช็กวันรายงานตัวครั้งถัดไปและเงื่อนไขของฉัน",
     "ช่วยแนะนำงานฝึกวิชาชีพด้านช่างฝีมือเทคนิค",
     "เกณฑ์การประเมินคะแนนความประพฤติคืออะไร",
-    "แนะนำกิจกรรมบริการสังคมในปทุมธานีให้หน่อย"
+    "แนะนำกิจกรรมบริการสังคมในจังหวัดสงขลาให้หน่อย"
   ];
 
   // Scroll to bottom whenever messages list grows
@@ -180,7 +190,7 @@ export const AIAssistantChat: React.FC = () => {
             <h3 className="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2">ความสามารถหลักของบอทอัจฉริยะ</h3>
             
             <p className="text-xs text-slate-600 leading-relaxed">
-              สแกนคำถามเชื่อมโยงฐานข้อมูลส่วนบุคคลของคุณสมชาย ใจดี และกฎหมายคุมประพฤติ พ.ศ. 2562 เพื่อตอบปัญหาสิทธิ์และระเบียบเกณฑ์วินัยได้ทันที:
+              สแกนคำถามเชื่อมโยงฐานข้อมูลส่วนบุคคลของ{probationerProfile?.name || "ท่าน"} และกฎหมายคุมประพฤติ พ.ศ. 2562 เพื่อตอบปัญหาสิทธิ์และระเบียบเกณฑ์วินัยได้ทันที:
             </p>
 
             <div className="space-y-3.5 text-xs text-slate-600">

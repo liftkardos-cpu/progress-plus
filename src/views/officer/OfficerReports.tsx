@@ -1,3 +1,13 @@
+// ==========================================
+// 🇹🇭 ไฟล์: /src/views/officer/OfficerReports.tsx
+// คำอธิบาย: ระบบตรวจสอบและอนุมัติการรายงานตัวออนไลน์ของผู้ถูกคุมประพฤติ (Officer Online Reports Auditing)
+// โครงสร้างไฟล์:
+//   - ส่วนนำเข้าข้อมูลและหัวใบงาน (Imports)
+//   - แผงข้อมูลตารางแสดงผู้รายงานตัวออนไลน์ (Reports Table View)
+//   - ฟังก์ชันจัดการกดยืนยันอนุมัติหรือปฏิเสธรายงานตัว (Approval and Reject Functions)
+//   - แสดงรูปถ่ายคู่พิกัดจีพีเอสจริงในเขต สงขลา (Audit Details Card with GPS Location Check)
+// ==========================================
+
 import React, { useState } from "react";
 import { useApp } from "../../context/AppContext";
 import { 
@@ -26,10 +36,10 @@ export const OfficerReports: React.FC = () => {
       name: "นายสมชาย ใจดี",
       date: "25 มิถุนายน 2567",
       time: "08:30 น.",
-      location: "อาคารกรมคุมประพฤติ ปทุมธานี (GPS: 14.0152, 100.5284)",
-      text: "ข้าพเจ้านายสมชาย ใจดี มารายงานตัวงวดที่ 8 ประจำเดือนมิถุนายน เรียบร้อยแล้ว ปัจจุบันตั้งใจประกอบสัมมาชีพสุจริต และไม่ได้ไปยุ่งเกี่ยวกับสิ่งเสพติดแต่อย่างใด พฤติกรรมปกติดีครับ",
+      location: "สำนักงานคุมประพฤติจังหวัดสงขลา (GPS: 7.1476, 100.6128)",
+      text: "ข้าพเจ้านายสมชาย ใจดี มารายงานตัวงวดที่ 8 ประจำเดือนมิถุนายน เรียบร้อยแล้ว ปัจจุบันตั้งใจประกอบสัมมาชีพสุจริต และไม่ได้ไปยุ่งเกี่ยวกับสิ่งเสพติดแต่อย่างใด พฤติกรรมปกดีครับ",
       status: "รออนุมัติ",
-      photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80"
+      photoUrl: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="r_ส" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#r_ส)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="\'Sarabun\', sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ส</text></svg>')}`
     },
     {
       id: "REP-6702",
@@ -40,7 +50,7 @@ export const OfficerReports: React.FC = () => {
       location: "รายงานตัวออนไลน์ผ่าน Application (GPS: 13.7563, 100.5018)",
       text: "นางสาวสมใจ นึกงาม ประสงค์รายงานตัวออนไลน์งวดที่ 4 ประจำเดือนนี้ ปัจจุบันประกอบอาชีพพนักงานขายเสื้อผ้า ไม่ได้ไปยุ่งเกี่ยวกับกลุ่มเสี่ยง และพยายามทำกิจกรรมความดีสะสมชั่วโมงครบถ้วนตามกำหนดค่ะ",
       status: "อนุมัติแล้ว",
-      photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80"
+      photoUrl: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="r_ส_2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4c0519"/><stop offset="100%" stop-color="#881337"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#r_ส_2)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="\'Sarabun\', sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ส</text></svg>')}`
     },
     {
       id: "REP-6703",
@@ -51,7 +61,7 @@ export const OfficerReports: React.FC = () => {
       location: "รายงานตัวออนไลน์ผ่าน App (GPS: 14.0203, 100.5342)",
       text: "มารายงานตัวออนไลน์ครับ เดือนนี้ได้ไปบำบัดรักษาฟื้นฟูตามที่นัดหมายไว้ พยายามหลีกเลี่ยงเพื่อนฝูงเก่าๆ และตรวจปัสสาวะผ่านทุกครั้งครับ",
       status: "อนุมัติแล้ว",
-      photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80"
+      photoUrl: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="r_ธ" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#172554"/><stop offset="100%" stop-color="#1e3a8a"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#r_ธ)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="\'Sarabun\', sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ธ</text></svg>')}`
     }
   ]);
 

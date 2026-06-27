@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useApp } from "../../context/AppContext";
 import { 
   Search, 
@@ -40,14 +40,40 @@ export const PartnerDashboard: React.FC = () => {
     submitEvaluation, 
     addNotification,
     addActivity,
-    deleteActivity
+    deleteActivity,
+    updateProbationerHoursDirectly
   } = useApp();
 
   // Internal navigation state for deep screens inside Partner Views
   const [internalSubView, setInternalSubView] = useState<string | null>(null);
 
+  // Reset internal sub-view when the main view changes via sidebar navigation
+  useEffect(() => {
+    setInternalSubView(null);
+  }, [currentView]);
+
+  // Dynamic Partner organization details state
+  const [partnerName, setPartnerName] = useState("เทศบาลนครหาดใหญ่");
+  const [coordinatorName, setCoordinatorName] = useState("นายณัฐวุฒิ ใจดี");
+  const [contactPhone, setContactPhone] = useState("074-200-000 ต่อ 112");
+  const [gpsCoordinates, setGpsCoordinates] = useState("7.0084, 100.4767 (คอหงส์ หาดใหญ่ สงขลา)");
+
+  // States for real-time online service hour updater form
+  const [directProbationerId, setDirectProbationerId] = useState("");
+  const [directActivityTitle, setDirectActivityTitle] = useState("บำเพ็ญประโยชน์ทำความสะอาดหาดชลาทัศน์");
+  const [directHours, setDirectHours] = useState(4);
+  const [directPartnerName, setDirectPartnerName] = useState("เทศบาลนครสงขลา");
+  const [directLedgers, setDirectLedgers] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (probationersList && probationersList.length > 0 && !directProbationerId) {
+      setDirectProbationerId(probationersList[0].id);
+    }
+  }, [probationersList, directProbationerId]);
+
   // States for adding / editing activity modal
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingActId, setEditingActId] = useState<string | null>(null);
   const [newActTitle, setNewActTitle] = useState("");
   const [newActLocation, setNewActLocation] = useState("");
   const [newActCategory, setNewActCategory] = useState("สาธารณประโยชน์");
@@ -56,16 +82,63 @@ export const PartnerDashboard: React.FC = () => {
   const [newActDate, setNewActDate] = useState("2026-06-25");
   const [newActTime, setNewActTime] = useState("08:30 - 12:00");
 
+  // Pagination states for Activity Management list
+  const [activitiesPage, setActivitiesPage] = useState(1);
+  const [activitiesPerPage, setActivitiesPerPage] = useState(5);
+
   // States for interactive Attendance / Evaluation workflow
   const [selectedAttendee, setSelectedAttendee] = useState({
     id: "PB6705-123456",
     name: "นายสมชาย ใจดี",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=facearea&facepad=2&q=80",
+    avatar: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="p_1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p_1)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="Sarabun, sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ส</text></svg>')}`,
     checkIn: "08:35:22",
     checkOut: "12:05:18",
     date: "25 พ.ค. 2567",
     signature: "สมชาย ใจดี"
   });
+
+  // Custom signature canvas state simulation
+  const [signatureCleared, setSignatureCleared] = useState(false);
+  const [signatureText, setSignatureText] = useState("สมชาย ใจดี");
+  const [isDrawingSignature, setIsDrawingSignature] = useState(false);
+  const [signaturePoints, setSignaturePoints] = useState<string[]>([]);
+
+  // Interactive Calendar notes / memo states
+  const [selectedCalendarDay, setSelectedCalendarDay] = useState<number | null>(null);
+  const [calendarMemos, setCalendarMemos] = useState<Record<number, string>>({
+    3: "เตรียมไม้กวาด เครื่องพ่นฆ่าเชื้อ และถังขยะทำความสะอาดวัดหัวขวาง",
+    4: "นัดหมายกลุ่มอาสาปลูกป่า สวนสาธารณะหาดใหญ่ แจกถุงมือและต้นกล้า",
+    8: "ทาสีและติดตั้งมุ้งลวด ศูนย์เด็กเล็กบ้านคลองเตย",
+    20: "สรุปรายงานชั่วโมงงานและจัดส่งประวัติการประเมินรอบเดือน พฤษภาคม เข้าศาล"
+  });
+  const [showCalendarMemoModal, setShowCalendarMemoModal] = useState(false);
+  const [calendarMemoInput, setCalendarMemoInput] = useState("");
+
+  // Applicants management state for dynamic approvals/rejections
+  const [applicants, setApplicants] = useState([
+    { name: "นายสมชาย ใจดี", id: "PB6705-123456", job: "ทำความสะอาดวัด", date: "25 พ.ค. 2567", status: "อนุมัติแล้ว", avatar: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="p_ส1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p_ส1)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="Sarabun, sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ส</text></svg>')}` },
+    { name: "นายธนวัฒน์ รักดี", id: "PB6705-123457", job: "ปลูกต้นไม้ เพิ่มพื้นที่สีเขียว", date: "26 พ.ค. 2567", status: "รอดำเนินการ", avatar: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="p_ธ" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#172554"/><stop offset="100%" stop-color="#1e3a8a"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p_ธ)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="Sarabun, sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ธ</text></svg>')}` },
+    { name: "นายวิชัย ใจกล้า", id: "PB6705-123458", job: "จัดห้องสมุดเพื่อการเรียนรู้", date: "1 มิ.ย. 2567", status: "รอดำเนินการ", avatar: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="p_ว" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#311005"/><stop offset="100%" stop-color="#451a03"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p_ว)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="Sarabun, sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ว</text></svg>')}` }
+  ]);
+  const [rejectingApplicantId, setRejectingApplicantId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("ผู้ถูกคุมประพฤติมีตารางนัดหมายที่ตรงซ้อนกับกิจกรรมอื่น");
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+
+  // Statistical report export states
+  const [isExportingReport, setIsExportingReport] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+  const [exportReportTitle, setExportReportTitle] = useState("");
+
+  // Custom documents library
+  const [documents, setDocuments] = useState([
+    { title: "คู่มือการจัดตั้งสถานที่บำเพ็ญสาธารณประโยชน์สำหรับหน่วยงานภาคี.pdf", size: "3.2 MB", date: "15 พฤษภาคม 2567" },
+    { title: "ข้อบังคับและกฎระเบียบกระทรวงยุติธรรม ว่าด้วยเรื่องชั่วโมงจิตอาสา 2566.pdf", size: "1.8 MB", date: "10 พฤษภาคม 2567" },
+    { title: "แบบฟอร์มการประเมินระดับคุณธรรมและมารยาทผู้ถูกคุมประพฤติ (สากล).docx", size: "520 KB", date: "02 พฤษภาคม 2567" },
+    { title: "ขั้นตอนจำลองการสแกน QR Code และอนุมัติโอนเวลางานศาล.pdf", size: "2.1 MB", date: "28 เมษายน 2567" }
+  ]);
+  const [isUploadDocOpen, setIsUploadDocOpen] = useState(false);
+  const [newDocTitle, setNewDocTitle] = useState("");
+  const [newDocSize, setNewDocSize] = useState("1.5 MB");
 
   // Ratings states for Evaluation Screen
   const [ratingResponsibility, setRatingResponsibility] = useState(5);
@@ -190,57 +263,85 @@ export const PartnerDashboard: React.FC = () => {
     );
   };
 
-  // Handle addition of new activity
-  const handleAddNewActivity = (e: React.FormEvent) => {
+  // Handle addition or editing of activity
+  const handleSaveActivity = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newActTitle || !newActLocation) {
       alert("กรุณากรอกข้อมูลให้ครบถ้วน");
       return;
     }
 
-    const newActivity = {
-      id: `hatyai-${Date.now()}`,
-      title: newActTitle,
-      organizer: "เทศบาลนครหาดใหญ่",
-      location: newActLocation,
-      address: "อ. หาดใหญ่ จ. สงขลา",
-      date: new Date(newActDate).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" }),
-      time: newActTime,
-      hours: Number(newActHours),
-      maxParticipants: Number(newActMax),
-      currentParticipants: 0,
-      status: "เปิดรับสมัคร" as const,
-      category: newActCategory,
-      imageUrl: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=600&auto=format&fit=crop&q=60"
-    };
+    if (editingActId) {
+      // Edit mode
+      setLocalActs(localActs.map(act => {
+        if (act.id === editingActId) {
+          return {
+            ...act,
+            title: newActTitle,
+            location: newActLocation,
+            address: newActLocation,
+            category: newActCategory,
+            hours: Number(newActHours),
+            maxParticipants: Number(newActMax),
+            date: new Date(newActDate).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" }),
+            time: newActTime
+          };
+        }
+        return act;
+      }));
 
-    setLocalActs([newActivity, ...localActs]);
-    
-    // Mirror to global context
-    addActivity({
-      title: newActTitle,
-      category: newActCategory,
-      organizer: "เทศบาลนครหาดใหญ่",
-      location: newActLocation,
-      province: "สงขลา",
-      date: newActDate,
-      time: newActTime,
-      hours: Number(newActHours),
-      maxParticipants: Number(newActMax),
-      description: `กิจกรรม ${newActTitle} โดยความร่วมมือระหว่างเทศบาลนครหาดใหญ่และกรมคุมประพฤติ เพื่อการบำเพ็ญสาธารณประโยชน์`,
-      imageUrl: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=600&auto=format&fit=crop&q=60",
-      status: "เปิดรับสมัคร"
-    });
+      addNotification(
+        "แก้ไขกิจกรรมบริการสังคมสำเร็จ",
+        `อัปเดตข้อมูลกิจกรรม '${newActTitle}' สะสมชั่วโมงงานจำนวน ${newActHours} ชั่วโมงในระบบเรียบร้อย`,
+        "หน่วยงานภาคี"
+      );
+    } else {
+      // Create mode
+      const newActivity = {
+        id: `hatyai-${Date.now()}`,
+        title: newActTitle,
+        organizer: partnerName,
+        location: newActLocation,
+        address: "อ. หาดใหญ่ จ. สงขลา",
+        date: new Date(newActDate).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" }),
+        time: newActTime,
+        hours: Number(newActHours),
+        maxParticipants: Number(newActMax),
+        currentParticipants: 0,
+        status: "เปิดรับสมัคร" as const,
+        category: newActCategory,
+        imageUrl: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=600&auto=format&fit=crop&q=60"
+      };
+
+      setLocalActs([newActivity, ...localActs]);
+      
+      // Mirror to global context
+      addActivity({
+        title: newActTitle,
+        category: newActCategory,
+        organizer: partnerName,
+        location: newActLocation,
+        province: "สงขลา",
+        date: newActDate,
+        time: newActTime,
+        hours: Number(newActHours),
+        maxParticipants: Number(newActMax),
+        description: `กิจกรรม ${newActTitle} โดยความร่วมมือระหว่าง${partnerName}และกรมคุมประพฤติ เพื่อการบำเพ็ญสาธารณประโยชน์`,
+        imageUrl: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=600&auto=format&fit=crop&q=60",
+        status: "เปิดรับสมัคร"
+      });
+
+      addNotification(
+        "สร้างกิจกรรมบริการสังคมใหม่สำเร็จ",
+        `สร้างกิจกรรม '${newActTitle}' สะสมชั่วโมงงานจำนวน ${newActHours} ชั่วโมงในระบบเรียบร้อย`,
+        "หน่วยงานภาคี"
+      );
+    }
 
     setIsAddModalOpen(false);
+    setEditingActId(null);
     setNewActTitle("");
     setNewActLocation("");
-    
-    addNotification(
-      "สร้างกิจกรรมบริการสังคมใหม่สำเร็จ",
-      `เทศบาลนครหาดใหญ่ได้สร้างกิจกรรม '${newActTitle}' สะสมชั่วโมงงานจำนวน ${newActHours} ชั่วโมงในระบบเรียบร้อย`,
-      "หน่วยงานภาคี"
-    );
   };
 
   // Handle deletion of activity
@@ -586,52 +687,50 @@ export const PartnerDashboard: React.FC = () => {
 
                 {/* Dates grid */}
                 <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-700">
-                  {/* May 2567 calendar days mock */}
-                  <span className="text-slate-300">28</span>
-                  <span className="text-slate-300">29</span>
-                  <span className="text-slate-300">30</span>
-                  <span>1</span>
-                  <span>2</span>
-                  <span className="relative flex items-center justify-center">
-                    3
-                    <span className="absolute bottom-0.5 w-1 h-1 bg-emerald-500 rounded-full" />
-                  </span>
-                  <span className="relative flex items-center justify-center">
-                    4
-                    <span className="absolute bottom-0.5 w-1 h-1 bg-amber-500 rounded-full" />
-                  </span>
+                  {/* Previous month overflow (April) */}
+                  {[28, 29, 30].map(day => (
+                    <span key={`prev-${day}`} className="text-slate-300 p-1 flex items-center justify-center h-7 w-7 mx-auto">{day}</span>
+                  ))}
 
-                  <span>5</span>
-                  <span>6</span>
-                  <span>7</span>
-                  <span>8</span>
-                  <span>9</span>
-                  <span>10</span>
-                  <span>11</span>
+                  {/* Current month days (May 2567) */}
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map(day => {
+                    const hasMemo = calendarMemos[day];
+                    const isToday = day === 20; // 20 May is today's mock date
+                    
+                    // Determine dot color
+                    let dotColor = "bg-emerald-500";
+                    if (day === 4) dotColor = "bg-amber-500";
+                    if (day === 20) dotColor = "bg-white"; // white dot on blue background for today
+                    if (day === 8) dotColor = "bg-red-500";
 
-                  <span>12</span>
-                  <span>13</span>
-                  <span>14</span>
-                  <span>15</span>
-                  <span>16</span>
-                  <span>17</span>
-                  <span>18</span>
+                    return (
+                      <button
+                        key={`curr-${day}`}
+                        type="button"
+                        onClick={() => {
+                          setSelectedCalendarDay(day);
+                          setCalendarMemoInput(calendarMemos[day] || "");
+                          setShowCalendarMemoModal(true);
+                        }}
+                        className={`relative flex flex-col items-center justify-center rounded-full hover:bg-slate-100 transition-colors cursor-pointer w-7 h-7 mx-auto ${
+                          isToday 
+                            ? "bg-blue-600 text-white font-bold shadow-md shadow-blue-500/20" 
+                            : "text-slate-800"
+                        }`}
+                      >
+                        <span className="text-[11px] font-bold">{day}</span>
+                        {/* Dot indicator */}
+                        {hasMemo && (
+                          <span className={`absolute bottom-0.5 w-1 h-1 rounded-full ${dotColor}`} />
+                        )}
+                      </button>
+                    );
+                  })}
 
-                  <span>19</span>
-                  <span className="w-7 h-7 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold shadow-md shadow-blue-500/20 mx-auto">20</span>
-                  <span>21</span>
-                  <span>22</span>
-                  <span>23</span>
-                  <span>24</span>
-                  <span>25</span>
-
-                  <span>26</span>
-                  <span>27</span>
-                  <span>28</span>
-                  <span>29</span>
-                  <span>30</span>
-                  <span>31</span>
-                  <span className="text-slate-300">1</span>
+                  {/* Next month overflow (June) */}
+                  {[1].map(day => (
+                    <span key={`next-${day}`} className="text-slate-300 p-1 flex items-center justify-center h-7 w-7 mx-auto">{day}</span>
+                  ))}
                 </div>
 
                 {/* Color Legends */}
@@ -667,9 +766,9 @@ export const PartnerDashboard: React.FC = () => {
               
               <div className="space-y-3.5">
                 {[
-                  { name: "นายณัฐวุฒิ ใจดี", id: "PB6705-123456", job: "ปรับปรุงภูมิทัศน์สวนสาธารณะ", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80" },
-                  { name: "น.ส.จิราภรณ์ รักดี", id: "PB6705-123457", job: "ปรับปรุงภูมิทัศน์สวนสาธารณะ", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" },
-                  { name: "นายกิตติพงษ์ เสือทอง", id: "PB6705-123458", job: "ปรับปรุงภูมิทัศน์สวนสาธารณะ", avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80" }
+                  { name: "นายณัฐวุฒิ ใจดี", id: "PB6705-123456", job: "ปรับปรุงภูมิทัศน์สวนสาธารณะ", avatar: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="p_ณ" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p_ณ)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="Sarabun, sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ณ</text></svg>')}` },
+                  { name: "น.ส.จิราภรณ์ รักดี", id: "PB6705-123457", job: "ปรับปรุงภูมิทัศน์สวนสาธารณะ", avatar: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="p_จ" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#022c22"/><stop offset="100%" stop-color="#064e3b"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p_จ)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="Sarabun, sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">จ</text></svg>')}` },
+                  { name: "นายกิตติพงษ์ เสือทอง", id: "PB6705-123458", job: "ปรับปรุงภูมิทัศน์สวนสาธารณะ", avatar: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="p_ก" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#075985"/><stop offset="100%" stop-color="#0369a1"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p_ก)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="Sarabun, sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ก</text></svg>')}` }
                 ].map((att, idx) => (
                   <div key={idx} className="flex items-center space-x-3 text-xs">
                     <img src={att.avatar} alt={att.name} className="w-9 h-9 rounded-full object-cover ring-2 ring-slate-100" />
@@ -865,150 +964,216 @@ export const PartnerDashboard: React.FC = () => {
           </div>
 
           {/* Activities Cards Grid List */}
-          <div className="space-y-4">
-            {localActs
-              .filter(act => {
-                const matchesSearch = act.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                                      act.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                      act.category.toLowerCase().includes(searchQuery.toLowerCase());
-                const matchesStatus = statusFilter === "สถานะทั้งหมด" || act.status === statusFilter;
-                const matchesCategory = categoryFilter === "ประเภทกิจกรรม" || act.category === categoryFilter;
-                return matchesSearch && matchesStatus && matchesCategory;
-              })
-              .map((act) => {
-                const progressPercentage = Math.round((act.currentParticipants / act.maxParticipants) * 100);
-                
-                return (
-                  <div key={act.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 hover:shadow-md transition-shadow flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-                    
-                    {/* Left: Photo + basic details */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 flex-1 min-w-0">
-                      <img 
-                        src={act.imageUrl} 
-                        alt={act.title} 
-                        className="w-full sm:w-28 h-28 sm:h-24 rounded-xl object-cover ring-1 ring-slate-100 shrink-0" 
-                      />
-                      <div className="space-y-1.5 flex-1 min-w-0">
-                        <div className="flex items-center space-x-2">
-                          <h3 className="text-sm font-black text-slate-800 hover:text-blue-600 cursor-pointer transition-colors truncate">
-                            {act.title}
-                          </h3>
-                        </div>
-                        <p className="text-xs font-bold text-slate-500 truncate">{act.organizer}</p>
-                        
-                        <div className="flex flex-wrap items-center gap-y-1.5 gap-x-3 text-[10.5px] text-slate-400 font-semibold">
-                          <span className="flex items-center space-x-1 truncate">
-                            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            <span>{act.address}</span>
-                          </span>
-                          <span className="flex items-center space-x-1 shrink-0">
-                            <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            <span>{act.date} &nbsp; {act.time}</span>
-                          </span>
-                        </div>
+          {(() => {
+            const filtered = localActs.filter(act => {
+              const matchesSearch = act.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                    act.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                    act.category.toLowerCase().includes(searchQuery.toLowerCase());
+              const matchesStatus = statusFilter === "สถานะทั้งหมด" || act.status === statusFilter;
+              const matchesCategory = categoryFilter === "ประเภทกิจกรรม" || act.category === categoryFilter;
+              return matchesSearch && matchesStatus && matchesCategory;
+            });
 
-                        <div className="flex items-center gap-x-4 pt-1 text-[11px] font-bold text-slate-500">
-                          <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg border border-slate-100">
-                            รับสมัคร {act.maxParticipants} คน
-                          </span>
-                          <span className="flex items-center space-x-1 text-blue-600">
-                            <Clock className="w-3.5 h-3.5 shrink-0" />
-                            <span>{act.hours} ชั่วโมง</span>
-                          </span>
-                        </div>
-                      </div>
+            const totalItems = filtered.length;
+            const totalPages = Math.max(1, Math.ceil(totalItems / activitiesPerPage));
+            
+            // Safe page adjustment
+            const safePage = Math.min(activitiesPage, totalPages);
+            const startIndex = (safePage - 1) * activitiesPerPage;
+            const endIndex = Math.min(startIndex + activitiesPerPage, totalItems);
+            const pageItems = filtered.slice(startIndex, endIndex);
+
+            return (
+              <>
+                <div className="space-y-4">
+                  {pageItems.length === 0 ? (
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 text-center font-bold text-slate-400">
+                      ไม่พบกิจกรรมที่ตรงตามเงื่อนไขค้นหา
                     </div>
-
-                    {/* Middle / Right: Participants count & Status tags & actions */}
-                    <div className="flex sm:flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-center w-full lg:w-44 shrink-0 gap-3 border-t lg:border-t-0 border-slate-100 pt-3 lg:pt-0">
+                  ) : (
+                    pageItems.map((act) => {
+                      const progressPercentage = Math.round((act.currentParticipants / act.maxParticipants) * 100);
                       
-                      <div className="space-y-1.5 w-full text-left lg:text-right">
-                        <div className="flex items-center justify-between lg:justify-end lg:space-x-2">
-                          {act.status === "กำลังดำเนินการ" && (
-                            <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-100">
-                              กำลังดำเนินการ
-                            </span>
-                          )}
-                          {act.status === "เปิดรับสมัคร" && (
-                            <span className="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-100">
-                              เปิดรับสมัคร
-                            </span>
-                          )}
-                          {act.status === "รออนุมัติ" && (
-                            <span className="bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-100">
-                              รออนุมัติ
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Progress Bar participant count */}
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between lg:justify-end text-[10px] font-black text-slate-700 lg:space-x-1">
-                            <span className="lg:hidden text-slate-400 font-bold">ผู้สมัคร:</span>
-                            <span>ผู้สมัคร {act.currentParticipants} / {act.maxParticipants} คน</span>
-                          </div>
-                          <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                            <div 
-                              style={{ width: `${progressPercentage}%` }} 
-                              className={`h-full rounded-full ${
-                                act.status === "กำลังดำเนินการ" ? "bg-emerald-500" : "bg-blue-600"
-                              }`} 
+                      return (
+                        <div key={act.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 hover:shadow-md transition-shadow flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                          
+                          {/* Left: Photo + basic details */}
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 flex-1 min-w-0">
+                            <img 
+                              src={act.imageUrl} 
+                              alt={act.title} 
+                              className="w-full sm:w-28 h-28 sm:h-24 rounded-xl object-cover ring-1 ring-slate-100 shrink-0" 
                             />
+                            <div className="space-y-1.5 flex-1 min-w-0">
+                              <div className="flex items-center space-x-2">
+                                <h3 className="text-sm font-black text-slate-800 hover:text-blue-600 cursor-pointer transition-colors truncate">
+                                  {act.title}
+                                </h3>
+                              </div>
+                              <p className="text-xs font-bold text-slate-500 truncate">{act.organizer}</p>
+                              
+                              <div className="flex flex-wrap items-center gap-y-1.5 gap-x-3 text-[10.5px] text-slate-400 font-semibold">
+                                <span className="flex items-center space-x-1 truncate">
+                                  <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                  <span>{act.address || act.location}</span>
+                                </span>
+                                <span className="flex items-center space-x-1 shrink-0">
+                                  <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                  <span>{act.date} &nbsp; {act.time}</span>
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-x-4 pt-1 text-[11px] font-bold text-slate-500">
+                                <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg border border-slate-100">
+                                  รับสมัคร {act.maxParticipants} คน
+                                </span>
+                                <span className="flex items-center space-x-1 text-blue-600">
+                                  <Clock className="w-3.5 h-3.5 shrink-0" />
+                                  <span>{act.hours} ชั่วโมง</span>
+                                </span>
+                              </div>
+                            </div>
                           </div>
+
+                          {/* Middle / Right: Participants count & Status tags & actions */}
+                          <div className="flex sm:flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-center w-full lg:w-44 shrink-0 gap-3 border-t lg:border-t-0 border-slate-100 pt-3 lg:pt-0">
+                            
+                            <div className="space-y-1.5 w-full text-left lg:text-right">
+                              <div className="flex items-center justify-between lg:justify-end lg:space-x-2">
+                                {act.status === "กำลังดำเนินการ" && (
+                                  <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-100">
+                                    กำลังดำเนินการ
+                                  </span>
+                                )}
+                                {act.status === "เปิดรับสมัคร" && (
+                                  <span className="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-100">
+                                    เปิดรับสมัคร
+                                  </span>
+                                )}
+                                {act.status === "รออนุมัติ" && (
+                                  <span className="bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-100">
+                                    รออนุมัติ
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Progress Bar participant count */}
+                              <div className="space-y-1">
+                                <div className="flex items-center justify-between lg:justify-end text-[10px] font-black text-slate-700 lg:space-x-1">
+                                  <span className="lg:hidden text-slate-400 font-bold">ผู้สมัคร:</span>
+                                  <span>ผู้สมัคร {act.currentParticipants} / {act.maxParticipants} คน</span>
+                                </div>
+                                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                  <div 
+                                    style={{ width: `${progressPercentage}%` }} 
+                                    className={`h-full rounded-full ${
+                                      act.status === "กำลังดำเนินการ" ? "bg-emerald-500" : "bg-blue-600"
+                                    }`} 
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Control buttons */}
+                            <div className="flex items-center space-x-1.5">
+                              {act.id === "hatyai-1" && (
+                                <button 
+                                  onClick={() => {
+                                    setInternalSubView("ATTENDANCE_VERIFICATION");
+                                  }}
+                                  className="bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-[10.5px] px-2.5 py-1.5 rounded-lg border border-blue-100 transition-colors"
+                                >
+                                  เช็กเข้าร่วม
+                                </button>
+                              )}
+                              <button 
+                                onClick={() => {
+                                  setEditingActId(act.id);
+                                  setNewActTitle(act.title);
+                                  setNewActLocation(act.location);
+                                  setNewActCategory(act.category);
+                                  setNewActHours(act.hours);
+                                  setNewActMax(act.maxParticipants);
+                                  setNewActDate(act.date);
+                                  setNewActTime(act.time || "08:30 - 12:00");
+                                  setIsAddModalOpen(true);
+                                }}
+                                className="border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-600 px-2.5 py-1.5 rounded-lg flex items-center space-x-1 transition-colors"
+                              >
+                                <Edit className="w-3 h-3" />
+                                <span>แก้ไข</span>
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteActivity(act.id)}
+                                className="border border-red-200 hover:bg-red-50 text-red-600 p-1.5 rounded-lg transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+
+                          </div>
+
                         </div>
-                      </div>
+                      );
+                    })
+                  )}
+                </div>
 
-                      {/* Control buttons */}
-                      <div className="flex items-center space-x-1.5">
-                        {act.id === "hatyai-1" && (
-                          <button 
-                            onClick={() => {
-                              setInternalSubView("ATTENDANCE_VERIFICATION");
-                            }}
-                            className="bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-[10.5px] px-2.5 py-1.5 rounded-lg border border-blue-100 transition-colors"
-                          >
-                            เช็กเข้าร่วม
-                          </button>
-                        )}
-                        <button className="border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-600 px-2.5 py-1.5 rounded-lg flex items-center space-x-1 transition-colors">
-                          <Edit className="w-3 h-3" />
-                          <span>แก้ไข</span>
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteActivity(act.id)}
-                          className="border border-red-200 hover:bg-red-50 text-red-600 p-1.5 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                {/* Bottom Pagination controls */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-100 pt-4 text-xs font-bold text-slate-500">
+                  <span>
+                    แสดง {totalItems === 0 ? 0 : startIndex + 1} - {endIndex} จาก {totalItems} กิจกรรม
+                  </span>
+                  
+                  <div className="flex items-center space-x-1">
+                    <button 
+                      disabled={safePage === 1}
+                      onClick={() => setActivitiesPage(safePage - 1)}
+                      className="p-1 px-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-40"
+                    >
+                      &lt;
+                    </button>
+                    
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                      <button
+                        key={p}
+                        onClick={() => setActivitiesPage(p)}
+                        className={`p-1 px-3 rounded-lg transition-colors cursor-pointer ${
+                          p === safePage 
+                            ? "bg-blue-600 text-white shadow" 
+                            : "border border-slate-200 hover:bg-slate-50"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ))}
 
-                    </div>
-
+                    <button 
+                      disabled={safePage === totalPages}
+                      onClick={() => setActivitiesPage(safePage + 1)}
+                      className="p-1 px-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-40"
+                    >
+                      &gt;
+                    </button>
                   </div>
-                );
-              })}
-          </div>
-
-          {/* Bottom Pagination controls */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-100 pt-4 text-xs font-bold text-slate-500">
-            <span>แสดง 1 - 5 จาก 24 กิจกรรม</span>
-            <div className="flex items-center space-x-1">
-              <button className="p-1 px-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer">&lt;</button>
-              <button className="p-1 px-3 bg-blue-600 text-white rounded-lg shadow">1</button>
-              <button className="p-1 px-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">2</button>
-              <button className="p-1 px-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">3</button>
-              <button className="p-1 px-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">4</button>
-              <button className="p-1 px-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">5</button>
-              <button className="p-1 px-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">...</button>
-              <button className="p-1 px-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">&gt;</button>
-            </div>
-            {/* select items per page */}
-            <select className="border border-slate-200 rounded-lg p-1 px-2 bg-slate-50 font-semibold cursor-pointer outline-none">
-              <option>แสดง 5 / หน้า</option>
-              <option>แสดง 10 / หน้า</option>
-              <option>แสดง 20 / หน้า</option>
-            </select>
-          </div>
+                  
+                  {/* select items per page */}
+                  <select 
+                    value={activitiesPerPage}
+                    onChange={(e) => {
+                      setActivitiesPerPage(Number(e.target.value));
+                      setActivitiesPage(1);
+                    }}
+                    className="border border-slate-200 rounded-lg p-1 px-2 bg-slate-50 font-semibold cursor-pointer outline-none"
+                  >
+                    <option value={5}>แสดง 5 / หน้า</option>
+                    <option value={10}>แสดง 10 / หน้า</option>
+                    <option value={20}>แสดง 20 / หน้า</option>
+                  </select>
+                </div>
+              </>
+            );
+          })()}
 
         </div>
       )}
@@ -1502,9 +1667,9 @@ export const PartnerDashboard: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-50 text-slate-600 font-medium">
                 {[
-                  { name: "นายสมชาย ใจดี", id: "PB6705-123456", job: "ทำความสะอาดวัด", date: "25 พ.ค. 2567", status: "อนุมัติแล้ว", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" },
-                  { name: "นายธนวัฒน์ รักดี", id: "PB6705-123457", job: "ปลูกต้นไม้ เพิ่มพื้นที่สีเขียว", date: "26 พ.ค. 2567", status: "รอดำเนินการ", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80" },
-                  { name: "นายวิชัย ใจกล้า", id: "PB6705-123458", job: "จัดห้องสมุดเพื่อการเรียนรู้", date: "1 มิ.ย. 2567", status: "รอดำเนินการ", avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80" }
+                  { name: "นายสมชาย ใจดี", id: "PB6705-123456", job: "ทำความสะอาดวัด", date: "25 พ.ค. 2567", status: "อนุมัติแล้ว", avatar: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="p_ส1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p_ส1)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="Sarabun, sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ส</text></svg>')}` },
+                  { name: "นายธนวัฒน์ รักดี", id: "PB6705-123457", job: "ปลูกต้นไม้ เพิ่มพื้นที่สีเขียว", date: "26 พ.ค. 2567", status: "รอดำเนินการ", avatar: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="p_ธ" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#172554"/><stop offset="100%" stop-color="#1e3a8a"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p_ธ)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="Sarabun, sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ธ</text></svg>')}` },
+                  { name: "นายวิชัย ใจกล้า", id: "PB6705-123458", job: "จัดห้องสมุดเพื่อการเรียนรู้", date: "1 มิ.ย. 2567", status: "รอดำเนินการ", avatar: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="p_ว" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#311005"/><stop offset="100%" stop-color="#451a03"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p_ว)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="Sarabun, sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ว</text></svg>')}` }
                 ].map((item, idx) => (
                   <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                     <td className="p-4 flex items-center space-x-2.5">
@@ -1561,8 +1726,8 @@ export const PartnerDashboard: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
-              { name: "นายสมชาย ใจดี", id: "PB6705-123456", job: "ทำความสะอาดวัด", checkIn: "08:35:22", status: "เช็กอินเข้าแล้ว", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" },
-              { name: "นางสาวสุรีย์ เสมอใจ", id: "PB6705-123459", job: "ทำความสะอาดวัด", checkIn: "08:40:15", status: "เช็กอินเข้าแล้ว", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" }
+              { name: "นายสมชาย ใจดี", id: "PB6705-123456", job: "ทำความสะอาดวัด", checkIn: "08:35:22", status: "เช็กอินเข้าแล้ว", avatar: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="p_ส2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p_ส2)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="Sarabun, sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ส</text></svg>')}` },
+              { name: "นางสาวสุรีย์ เสมอใจ", id: "PB6705-123459", job: "ทำความสะอาดวัด", checkIn: "08:40:15", status: "เช็กอินเข้าแล้ว", avatar: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="p_สุ" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4c0519"/><stop offset="100%" stop-color="#881337"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p_สุ)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="Sarabun, sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ส</text></svg>')}` }
             ].map((p, idx) => (
               <div key={idx} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex flex-col justify-between space-y-4">
                 <div className="flex items-center space-x-3">
@@ -1602,56 +1767,184 @@ export const PartnerDashboard: React.FC = () => {
 
       {/* 5.3 Service Hours verified history ledger (ชั่วโมงบริการสังคม) */}
       {activeView === "SERVICE_HOURS" && (
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6 animate-fade-in">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-black text-slate-800">สมุดทะเบียนการตรวจสอบชั่วโมงสะสม</h2>
-              <p className="text-xs text-slate-400 mt-1 font-semibold">บัญชีบันทึกการส่งชั่วโมงบำเพ็ญประโยชน์ที่ลงลายมือชื่อและผ่านการประเมินระดับคุณธรรมแล้ว</p>
-            </div>
-            {/* Search Input ledger */}
-            <div className="relative w-full sm:w-64">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input type="text" placeholder="ค้นหาชื่อ, รหัสคดี" className="w-full pl-9 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs" />
-            </div>
+        <div className="space-y-6 animate-fade-in">
+          {/* Header */}
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-2">
+            <h2 className="text-xl font-black text-slate-800">ระบบอัปเดตชั่วโมงและประมวลงานบริการสังคมออนไลน์ (Partnership Hours Hub)</h2>
+            <p className="text-xs text-slate-400 font-semibold">หน่วยงานภาคีสามารถบันทึกและอนุมัติชั่วโมงสะสมการทำงานอาสาเพื่อเชื่อมโยงเข้าแฟ้มประวัติรายบุคคลแบบออนไลน์ทันที</p>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-slate-100">
-            <table className="w-full text-xs text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50 text-slate-400 font-black uppercase text-[10px] tracking-wider border-b border-slate-100">
-                  <th className="p-4">ผู้บำเพ็ญประโยชน์</th>
-                  <th className="p-4">รหัสคดี</th>
-                  <th className="p-4">ชั่วโมงสะสมเพิ่ม</th>
-                  <th className="p-4">ชื่อกิจกรรม</th>
-                  <th className="p-4">ผู้ตรวจประเมิน</th>
-                  <th className="p-4">การรับรองของศาล</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50 text-slate-600 font-medium">
-                {[
-                  { name: "นายสมชาย ใจดี", id: "PB6705-123456", hours: "3.5 ชม.", job: "ทำความสะอาดวัดหัวขวาง", r: "เทศบาลนครหาดใหญ่", court: "ผ่านการอนุมัติแล้ว" },
-                  { name: "นางสาวสุรีย์ เสมอใจ", id: "PB6705-123459", hours: "4.0 ชม.", job: "ปลูกต้นไม้เพิ่มพื้นที่เขียว", r: "เทศบาลนครหาดใหญ่", court: "ผ่านการอนุมัติแล้ว" },
-                  { name: "นายวิชัย ใจกล้า", id: "PB6705-123458", hours: "6.0 ชม.", job: "ทาสีปรับปรุงศูนย์เด็ก", r: "เทศบาลนครหาดใหญ่", court: "รอศาลลงตราประทับ" }
-                ].map((ledger, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="p-4 font-bold text-slate-800">{ledger.name}</td>
-                    <td className="p-4 font-mono">{ledger.id}</td>
-                    <td className="p-4 font-black text-emerald-600">{ledger.hours}</td>
-                    <td className="p-4">{ledger.job}</td>
-                    <td className="p-4 text-slate-500">{ledger.r}</td>
-                    <td className="p-4">
-                      <span className={`px-2 py-0.5 text-[9px] font-black rounded-full border ${
-                        ledger.court === "ผ่านการอนุมัติแล้ว" 
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-100" 
-                          : "bg-amber-50 text-amber-700 border-amber-100"
-                      }`}>
-                        {ledger.court}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            {/* Left: Real-time hours update form (5 columns) */}
+            <div className="lg:col-span-5 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-4 h-fit">
+              <div className="flex items-center space-x-2 border-b border-slate-50 pb-3">
+                <span className="text-lg">⚡</span>
+                <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">ฟอร์มอนุมัติและอัปเดตชั่วโมงออนไลน์เรียลไทม์</h3>
+              </div>
+
+              <div className="space-y-3.5 text-xs">
+                {/* Select probationer */}
+                <div className="space-y-1.5">
+                  <label className="font-black text-slate-700 block">1. เลือกผู้ถูกคุมประพฤติที่บำเพ็ญประโยชน์</label>
+                  <select
+                    value={directProbationerId}
+                    onChange={(e) => setDirectProbationerId(e.target.value)}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-100 outline-none font-medium text-slate-700"
+                  >
+                    {probationersList.map(p => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} ({p.id}) — สะสมแล้ว {p.completedHours}/{p.requiredHours} ชม.
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Activity name */}
+                <div className="space-y-1.5">
+                  <label className="font-black text-slate-700 block">2. ระบุหัวข้องาน/กิจกรรมสาธารณประโยชน์</label>
+                  <input
+                    type="text"
+                    value={directActivityTitle}
+                    onChange={(e) => setDirectActivityTitle(e.target.value)}
+                    placeholder="เช่น ทำความสะอาดสวนสาธารณะเฉลิมพระเกียรติ, ช่วยงานคลังของบริจาค"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-100 outline-none font-medium text-slate-700"
+                  />
+                </div>
+
+                {/* Hours and Partner */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="font-black text-slate-700 block">3. ชั่วโมงที่เพิ่ม (ชม.)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="12"
+                      value={directHours}
+                      onChange={(e) => setDirectHours(parseInt(e.target.value) || 4)}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-100 outline-none font-bold text-slate-700 font-mono text-center"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-black text-slate-700 block">4. หน่วยงานผู้รับรอง</label>
+                    <select
+                      value={directPartnerName}
+                      onChange={(e) => setDirectPartnerName(e.target.value)}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-100 outline-none font-medium text-slate-700"
+                    >
+                      <option value="เทศบาลนครสงขลา">เทศบาลนครสงขลา</option>
+                      <option value="เทศบาลนครหาดใหญ่">เทศบาลนครหาดใหญ่</option>
+                      <option value="เทศบาลเมืองเขารูปช้าง">เทศบาลเมืองเขารูปช้าง</option>
+                      <option value="มรภ.สงขลา (จิตอาสา)">มรภ.สงขลา (จิตอาสา)</option>
+                      <option value="วัดบ่อยางสงขลา">วัดบ่อยางสงขลา</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Actions button */}
+                <button
+                  onClick={() => {
+                    if (!directProbationerId || !directActivityTitle.trim()) {
+                      alert("กรุณากรอกข้อมูลกิจกรรมให้ครบถ้วนก่อนบันทึกชั่วโมง");
+                      return;
+                    }
+                    const targetProb = probationersList.find(p => p.id === directProbationerId);
+                    if (!targetProb) return;
+
+                    // Update hours in the global state instantly
+                    updateProbationerHoursDirectly(directProbationerId, directHours, directActivityTitle, directPartnerName);
+
+                    // Add to local dynamically tracked ledgers
+                    const newLedger = {
+                      name: targetProb.name,
+                      id: targetProb.id,
+                      hours: `${directHours}.0 ชม.`,
+                      job: directActivityTitle,
+                      r: directPartnerName,
+                      court: "ผ่านการอนุมัติแล้ว"
+                    };
+                    setDirectLedgers(prev => [newLedger, ...prev]);
+                    
+                    alert(`✓ สำเร็จ! บันทึกและเชื่อมชั่วโมงบำเพ็ญประโยชน์ของ '${targetProb.name}' จำนวน ${directHours} ชม. เข้าแฟ้มประวัติแบบเรียลไทม์เสร็จสิ้น`);
+                  }}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs transition-colors shadow-sm flex items-center justify-center gap-1"
+                >
+                  <span>📶</span> อนุมัติและบันทึกชั่วโมงเข้าระบบออนไลน์ทันที
+                </button>
+              </div>
+            </div>
+
+            {/* Right: History register ledger table (7 columns) */}
+            <div className="lg:col-span-7 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider block">สมุดบัญชีทะเบียนชั่วโมงสะสมรวม</h3>
+                  <p className="text-[10px] text-slate-400 mt-0.5 font-bold">บันทึกประวัติการส่งชั่วโมงจากหน่วยงานภาคีหลักและออนไลน์เรียลไทม์</p>
+                </div>
+                {/* Search Input ledger */}
+                <div className="relative w-full sm:w-48">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                  <input type="text" placeholder="ค้นหาชื่อ, รหัสคดี..." className="w-full pl-8 pr-3 py-1 border border-slate-200 rounded-lg text-[10px]" />
+                </div>
+              </div>
+
+              <div className="overflow-x-auto rounded-xl border border-slate-100">
+                <table className="w-full text-xs text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 text-slate-400 font-black uppercase text-[10px] tracking-wider border-b border-slate-100">
+                      <th className="p-3">ผู้บำเพ็ญประโยชน์</th>
+                      <th className="p-3">รหัสคดี</th>
+                      <th className="p-3">ชั่วโมงสะสม</th>
+                      <th className="p-3">ชื่อกิจกรรมอาสา</th>
+                      <th className="p-3">ผู้ตรวจรับรอง</th>
+                      <th className="p-3">สถานะเชื่อมโยง</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50 text-slate-600 font-medium">
+                    {/* Render dynamically added ledgers first */}
+                    {directLedgers.map((ledger, idx) => (
+                      <tr key={`dyn-${idx}`} className="bg-blue-50/20 hover:bg-blue-50/40 transition-colors">
+                        <td className="p-3 font-bold text-blue-900">{ledger.name}</td>
+                        <td className="p-3 font-mono text-slate-500">{ledger.id}</td>
+                        <td className="p-3 font-black text-blue-600">{ledger.hours}</td>
+                        <td className="p-3 font-medium">{ledger.job}</td>
+                        <td className="p-3 text-slate-500 font-semibold">{ledger.r}</td>
+                        <td className="p-3">
+                          <span className="px-2 py-0.5 text-[8.5px] font-black rounded-full border bg-emerald-50 text-emerald-700 border-emerald-100 animate-pulse flex items-center gap-0.5 w-fit">
+                            <span>●</span> ONLINE
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+
+                    {[
+                      { name: "นายสมชาย ใจดี", id: "PB6705-123456", hours: "3.5 ชม.", job: "ทำความสะอาดวัดหัวขวาง", r: "เทศบาลนครหาดใหญ่", court: "ผ่านการอนุมัติแล้ว" },
+                      { name: "นางสาวสุรีย์ เสมอใจ", id: "PB6705-123459", hours: "4.0 ชม.", job: "ปลูกต้นไม้เพิ่มพื้นที่เขียว", r: "เทศบาลนครหาดใหญ่", court: "ผ่านการอนุมัติแล้ว" },
+                      { name: "นายวิชัย ใจกล้า", id: "PB6705-123458", hours: "6.0 ชม.", job: "ทาสีปรับปรุงศูนย์เด็ก", r: "เทศบาลนครหาดใหญ่", court: "รอศาลลงตราประทับ" }
+                    ].map((ledger, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="p-3 font-bold text-slate-800">{ledger.name}</td>
+                        <td className="p-3 font-mono text-slate-500">{ledger.id}</td>
+                        <td className="p-3 font-black text-emerald-600">{ledger.hours}</td>
+                        <td className="p-3 font-medium">{ledger.job}</td>
+                        <td className="p-3 text-slate-500 font-semibold">{ledger.r}</td>
+                        <td className="p-3">
+                          <span className={`px-2 py-0.5 text-[8.5px] font-black rounded-full border ${
+                            ledger.court === "ผ่านการอนุมัติแล้ว" 
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-100" 
+                              : "bg-amber-50 text-amber-700 border-amber-100"
+                          }`}>
+                            {ledger.court}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
         </div>
       )}
@@ -1717,29 +2010,122 @@ export const PartnerDashboard: React.FC = () => {
       {/* 5.5 Documents Announcements (เอกสารและประกาศ) */}
       {activeView === "DOCUMENTS_ANNOUNCEMENTS" && (
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6 animate-fade-in">
-          <div>
-            <h2 className="text-xl font-black text-slate-800">เอกสารคู่มือและประกาศพันธมิตร</h2>
-            <p className="text-xs text-slate-400 mt-1 font-semibold">ดาวน์โหลดหนังสือสั่งการ ระเบียบกระทรวงยุติธรรม และข้อกำหนดการดูแลผู้คุมประพฤติ</p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-black text-slate-800">เอกสารคู่มือและประกาศพันธมิตร</h2>
+              <p className="text-xs text-slate-400 mt-1 font-semibold">ดาวน์โหลดคู่มือ พิกัด และแบบฟอร์มการประเมินระดับคุณธรรมและมารยาท</p>
+            </div>
+            
+            <button 
+              onClick={() => setIsUploadDocOpen(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center justify-center space-x-1.5 transition-colors shadow-sm cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>อัปโหลดเอกสารคู่มือ</span>
+            </button>
           </div>
 
+          {isUploadDocOpen && (
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!newDocTitle) return;
+                const newDocument = {
+                  title: newDocTitle.endsWith(".pdf") || newDocTitle.endsWith(".docx") ? newDocTitle : `${newDocTitle}.pdf`,
+                  size: newDocSize,
+                  date: new Date().toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })
+                };
+                setDocuments([newDocument, ...documents]);
+                setNewDocTitle("");
+                setIsUploadDocOpen(false);
+                addNotification(
+                  "อัปโหลดเอกสารคู่มือสำเร็จ",
+                  `ระบบบันทึกเอกสาร '${newDocument.title}' สำหรับหน่วยงานพันธมิตรเรียบร้อยแล้ว`,
+                  "ระบบภายใน"
+                );
+              }}
+              className="p-4 bg-slate-50 border border-slate-100 rounded-2xl text-xs space-y-3"
+            >
+              <div className="font-bold text-slate-700 text-sm">ข้อมูลอัปโหลดเอกสารใหม่</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="block text-slate-500 font-bold">ชื่อไฟล์เอกสาร</label>
+                  <input 
+                    type="text" 
+                    required 
+                    placeholder="เช่น คู่มือขั้นตอนปฏิบัติคุมประพฤติ"
+                    value={newDocTitle}
+                    onChange={(e) => setNewDocTitle(e.target.value)}
+                    className="w-full p-2.5 border border-slate-200 rounded-xl bg-white outline-none focus:ring-2 focus:ring-blue-600/20 text-slate-800"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-slate-500 font-bold">ขนาดไฟล์โดยประมาณ</label>
+                  <select 
+                    value={newDocSize}
+                    onChange={(e) => setNewDocSize(e.target.value)}
+                    className="w-full p-2.5 border border-slate-200 rounded-xl bg-white cursor-pointer outline-none"
+                  >
+                    <option>1.2 MB</option>
+                    <option>2.4 MB</option>
+                    <option>3.5 MB</option>
+                    <option>780 KB</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2 justify-end pt-1">
+                <button 
+                  type="button" 
+                  onClick={() => setIsUploadDocOpen(false)}
+                  className="px-3.5 py-1.5 border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-100 font-bold"
+                >
+                  ยกเลิก
+                </button>
+                <button 
+                  type="submit" 
+                  className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-sm"
+                >
+                  บันทึกไฟล์
+                </button>
+              </div>
+            </form>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-bold text-slate-600">
-            {[
-              { title: "คู่มือการจัดตั้งสถานที่บำเพ็ญสาธารณประโยชน์สำหรับหน่วยงานภาคี.pdf", size: "3.2 MB", date: "15 พฤษภาคม 2567" },
-              { title: "ข้อบังคับและกฎระเบียบกระทรวงยุติธรรม ว่าด้วยเรื่องชั่วโมงจิตอาสา 2566.pdf", size: "1.8 MB", date: "10 พฤษภาคม 2567" },
-              { title: "แบบฟอร์มการประเมินระดับคุณธรรมและมารยาทผู้ถูกคุมประพฤติ (สากล).docx", size: "520 KB", date: "02 พฤษภาคม 2567" },
-              { title: "ขั้นตอนจำลองการสแกน QR Code และอนุมัติโอนเวลางานศาล.pdf", size: "2.1 MB", date: "28 เมษายน 2567" }
-            ].map((doc, idx) => (
+            {documents.map((doc, idx) => (
               <div key={idx} className="p-4 bg-slate-50 border border-slate-100 rounded-2xl hover:border-blue-300 transition-colors flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2.5 bg-red-50 text-red-600 rounded-xl">
+                <div className="flex items-center space-x-3 min-w-0">
+                  <div className="p-2.5 bg-red-50 text-red-600 rounded-xl shrink-0">
                     <FileText className="w-5 h-5" />
                   </div>
-                  <div>
-                    <span className="font-bold text-slate-800 block truncate max-w-xs">{doc.title}</span>
+                  <div className="min-w-0">
+                    <span className="font-bold text-slate-800 block truncate max-w-[200px] sm:max-w-xs">{doc.title}</span>
                     <span className="text-[10px] text-slate-400 font-medium block mt-0.5">{doc.size} &nbsp;•&nbsp; {doc.date}</span>
                   </div>
                 </div>
-                <button className="text-blue-600 hover:text-blue-700 hover:underline">ดาวน์โหลด</button>
+                <div className="flex items-center space-x-3 shrink-0">
+                  <button 
+                    onClick={() => alert(`📂 จำลองการดาวน์โหลดไฟล์สำเร็จ: ${doc.title}`)}
+                    className="text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
+                  >
+                    ดาวน์โหลด
+                  </button>
+                  <button 
+                    onClick={() => {
+                      if (confirm(`คุณแน่ใจหรือไม่ที่จะลบเอกสาร ${doc.title}?`)) {
+                        setDocuments(documents.filter((_, dIdx) => dIdx !== idx));
+                        addNotification(
+                          "ลบเอกสารสำเร็จ",
+                          `ระบบนำไฟล์เอกสาร '${doc.title}' ออกจากกลุ่มเอกสารสาธารณะแล้ว`,
+                          "ระบบภายใน"
+                        );
+                      }
+                    }}
+                    className="text-red-500 hover:text-red-700 cursor-pointer"
+                  >
+                    ลบ
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -1785,29 +2171,60 @@ export const PartnerDashboard: React.FC = () => {
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6 animate-fade-in max-w-xl">
           <div>
             <h2 className="text-xl font-black text-slate-800">ตั้งค่าข้อมูลบัญชีหน่วยงานภาคี</h2>
-            <p className="text-xs text-slate-400 mt-1 font-semibold">ตั้งค่าข้อมูลเทศบาลนครหาดใหญ่ พิกัดจีพีเอส และผู้ควบคุมสิทธิ์สแกนตรวจสอบ</p>
+            <p className="text-xs text-slate-400 mt-1 font-semibold">ตั้งค่าข้อมูล {partnerName} พิกัดจีพีเอส และผู้ควบคุมสิทธิ์สแกนตรวจสอบ</p>
           </div>
 
-          <form onSubmit={(e) => { e.preventDefault(); alert("💾 บันทึกข้อมูลการตั้งค่าหน่วยงานสำเร็จ!"); }} className="space-y-4 text-xs">
+          <form 
+            onSubmit={(e) => { 
+              e.preventDefault(); 
+              addNotification(
+                "อัปเดตข้อมูลหน่วยงานสำเร็จ",
+                `ข้อมูลทั่วไปของ '${partnerName}' ได้รับการอัปเดตลงระบบเครือข่ายเรียบร้อยแล้ว`,
+                "การตั้งค่าระบบ"
+              );
+              alert("💾 บันทึกข้อมูลการตั้งค่าหน่วยงานและผู้ประสานงานสำเร็จ!"); 
+            }} 
+            className="space-y-4 text-xs"
+          >
             
             <div className="space-y-1">
               <label className="block text-slate-600 font-bold">ชื่อหน่วยงานภาษาไทย</label>
-              <input type="text" defaultValue="เทศบาลนครหาดใหญ่" className="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50" />
+              <input 
+                type="text" 
+                value={partnerName} 
+                onChange={(e) => setPartnerName(e.target.value)}
+                className="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:bg-white text-slate-800 font-medium" 
+              />
             </div>
 
             <div className="space-y-1">
               <label className="block text-slate-600 font-bold">ที่ตั้ง / พิกัดละติจูด-ลองจิจูดกลาง</label>
-              <input type="text" defaultValue="7.0084, 100.4767 (คอหงส์ หาดใหญ่ สงขลา)" className="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50" />
+              <input 
+                type="text" 
+                value={gpsCoordinates} 
+                onChange={(e) => setGpsCoordinates(e.target.value)}
+                className="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:bg-white text-slate-800 font-medium" 
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="block text-slate-600 font-bold">ชื่อผู้ประสานงานหลัก</label>
-                <input type="text" defaultValue="นายณัฐวุฒิ ใจดี" className="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50" />
+                <input 
+                  type="text" 
+                  value={coordinatorName} 
+                  onChange={(e) => setCoordinatorName(e.target.value)}
+                  className="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:bg-white text-slate-800 font-medium" 
+                />
               </div>
               <div className="space-y-1">
                 <label className="block text-slate-600 font-bold">เบอร์โทรศัพท์ติดต่อ</label>
-                <input type="text" defaultValue="074-200-000 ต่อ 112" className="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50" />
+                <input 
+                  type="text" 
+                  value={contactPhone} 
+                  onChange={(e) => setContactPhone(e.target.value)}
+                  className="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:bg-white text-slate-800 font-medium" 
+                />
               </div>
             </div>
 
@@ -1835,16 +2252,21 @@ export const PartnerDashboard: React.FC = () => {
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
           <div className="bg-white rounded-3xl border border-slate-100 shadow-2xl p-6 w-full max-w-md space-y-4">
             <div className="flex items-center justify-between border-b border-slate-50 pb-2">
-              <h3 className="text-base font-black text-slate-800">เพิ่มกิจกรรมบำเพ็ญประโยชน์ใหม่</h3>
+              <h3 className="text-base font-black text-slate-800">
+                {editingActId ? "แก้ไขรายละเอียดกิจกรรมบำเพ็ญประโยชน์" : "เพิ่มกิจกรรมบำเพ็ญประโยชน์ใหม่"}
+              </h3>
               <button 
-                onClick={() => setIsAddModalOpen(false)}
+                onClick={() => {
+                  setIsAddModalOpen(false);
+                  setEditingActId(null);
+                }}
                 className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleAddNewActivity} className="space-y-4 text-xs text-left">
+            <form onSubmit={handleSaveActivity} className="space-y-4 text-xs text-left">
               
               <div className="space-y-1">
                 <label className="block text-slate-600 font-bold">ชื่อกิจกรรมบำเพ็ญประโยชน์</label>
@@ -1923,7 +2345,10 @@ export const PartnerDashboard: React.FC = () => {
               <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-50">
                 <button 
                   type="button"
-                  onClick={() => setIsAddModalOpen(false)}
+                  onClick={() => {
+                    setIsAddModalOpen(false);
+                    setEditingActId(null);
+                  }}
                   className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold rounded-xl"
                 >
                   ยกเลิก
@@ -1932,7 +2357,94 @@ export const PartnerDashboard: React.FC = () => {
                   type="submit"
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md shadow-blue-500/15"
                 >
-                  บันทึกสร้างกิจกรรม
+                  {editingActId ? "บันทึกแก้ไขข้อมูล" : "บันทึกสร้างกิจกรรม"}
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* -------------------------------------------------------------
+          7. CALENDAR MEMO MODAL DIALOG
+          ------------------------------------------------------------- */}
+      {showCalendarMemoModal && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-2xl p-6 w-full max-w-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-50 pb-2">
+              <h3 className="text-base font-black text-slate-800">
+                บันทึกช่วยจำ - วันที่ {selectedCalendarDay} พฤษภาคม 2567
+              </h3>
+              <button 
+                onClick={() => setShowCalendarMemoModal(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (selectedCalendarDay !== null) {
+                setCalendarMemos({
+                  ...calendarMemos,
+                  [selectedCalendarDay]: calendarMemoInput
+                });
+                addNotification(
+                  "บันทึกช่วยจำสำเร็จ",
+                  `อัปเดตบันทึกช่วยจำสำหรับวันที่ ${selectedCalendarDay} พฤษภาคม เรียบร้อยแล้ว`,
+                  "ระบบภายใน"
+                );
+              }
+              setShowCalendarMemoModal(false);
+            }} className="space-y-4 text-xs text-left">
+              
+              <div className="space-y-1">
+                <label className="block text-slate-600 font-bold">รายละเอียดบันทึก / แผนกิจกรรม</label>
+                <textarea 
+                  rows={4}
+                  placeholder="กรอกรายละเอียดบันทึกช่วยจำ เช่น นัดแนะตรวจสอบใบสมัคร, ลงพื้นที่ตรวจงาน ฯลฯ"
+                  value={calendarMemoInput}
+                  onChange={(e) => setCalendarMemoInput(e.target.value)}
+                  className="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-blue-600/20 text-slate-800 font-medium"
+                />
+              </div>
+
+              <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-50">
+                <button 
+                  type="button"
+                  onClick={() => setShowCalendarMemoModal(false)}
+                  className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold rounded-xl"
+                >
+                  ปิด
+                </button>
+                {calendarMemos[selectedCalendarDay || 0] && (
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      if (selectedCalendarDay !== null) {
+                        const updated = { ...calendarMemos };
+                        delete updated[selectedCalendarDay];
+                        setCalendarMemos(updated);
+                        addNotification(
+                          "ลบบันทึกช่วยจำ",
+                          `ลบบันทึกช่วยจำสำหรับวันที่ ${selectedCalendarDay} พฤษภาคม เรียบร้อยแล้ว`,
+                          "ระบบภายใน"
+                        );
+                      }
+                      setShowCalendarMemoModal(false);
+                    }}
+                    className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl border border-red-100 transition-colors"
+                  >
+                    ลบป้ายบันทึก
+                  </button>
+                )}
+                <button 
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md shadow-blue-500/15"
+                >
+                  บันทึกโน้ต
                 </button>
               </div>
 

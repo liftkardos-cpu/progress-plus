@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useApp } from "../../context/AppContext";
 import { GovBanner } from "../../components/GovBanner";
 import { 
@@ -22,7 +22,8 @@ import {
   ChevronRight,
   Sparkles,
   Search,
-  BookOpen
+  BookOpen,
+  Loader2
 } from "lucide-react";
 import { 
   LineChart, 
@@ -35,18 +36,157 @@ import {
 } from "recharts";
 
 export const ProbationerDashboard: React.FC = () => {
-  const { probationerProfile, activities, setCurrentView } = useApp();
+  const { probationerProfile, activities, appointments, setCurrentView, addEmergencyRequest } = useApp();
 
-  // Graph data representing hour progression
+  const [isSosModalOpen, setIsSosModalOpen] = useState(false);
+  const [sosReason, setSosReason] = useState("พาหนะเดินทางชำรุดเสียหาย");
+  const [sosDetails, setSosDetails] = useState("");
+  const [isSosSubmitting, setIsSosSubmitting] = useState(false);
+  const [sosSuccess, setSosSuccess] = useState(false);
+
+  // Helper to format Thai dates
+  const formatThaiDate = (dateStr: string) => {
+    if (!dateStr) return "";
+    try {
+      const parts = dateStr.split("-");
+      if (parts.length === 3) {
+        const year = parseInt(parts[0]);
+        const month = parseInt(parts[1]);
+        const day = parseInt(parts[2]);
+        const thaiMonths = [
+          "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+          "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+        ];
+        const thaiYear = year + 543;
+        return `${day} ${thaiMonths[month - 1]} ${thaiYear}`;
+      }
+      return dateStr;
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
+  // 1. Next Appointment Calculation
+  const myAppointments = appointments.filter(
+    a => a.probationerId === probationerProfile.id || a.probationerId.replace("PB-", "") === probationerProfile.id.replace("PB-", "")
+  );
+  const nextAppointment = myAppointments.find(a => a.status === "ยืนยันแล้ว" || a.status === "รอยืนยัน") || myAppointments[0];
+
+  const rawIdNum = parseInt(probationerProfile.id.replace(/\D/g, "")) || 0;
+  const offsetDays = (rawIdNum % 20) + 3; // between 3 and 22 days from current date
+  
+  const baseDate = new Date("2026-06-27");
+  baseDate.setDate(baseDate.getDate() + offsetDays);
+  
+  const autoDateStr = baseDate.toISOString().split("T")[0]; // "YYYY-MM-DD"
+  const autoTimeStr = `${String(8 + (rawIdNum % 4)).padStart(2, "0")}:${(rawIdNum % 2) === 0 ? "30" : "00"}`;
+  
+  const finalAppointment = nextAppointment || {
+    id: `auto-apt-${probationerProfile.id}`,
+    probationerId: probationerProfile.id,
+    probationerName: probationerProfile.name,
+    type: "นัดรายงานตัว",
+    date: autoDateStr,
+    time: autoTimeStr,
+    status: "ยืนยันแล้ว"
+  };
+
+  const getDaysRemaining = (targetDateStr: string) => {
+    try {
+      const target = new Date(targetDateStr);
+      const current = new Date("2026-06-27");
+      const diffTime = target.getTime() - current.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays;
+    } catch (e) {
+      return offsetDays;
+    }
+  };
+
+  const remainingDays = getDaysRemaining(finalAppointment.date);
+
+  // Graph data representing hour progression dynamically mapped to completedHours
+  const H = probationerProfile.completedHours;
   const chartData = [
-    { name: "ม.ค.", hours: 30 },
-    { name: "ก.พ.", hours: 60 },
-    { name: "มี.ค.", hours: 100 },
-    { name: "เม.ย.", hours: 130 },
-    { name: "พ.ค.", hours: 150 },
-    { name: "มิ.ย.", hours: 150 },
-    { name: "ก.ค.", hours: 150 }
+    { name: "ม.ค.", hours: Math.round(H * 0.15) },
+    { name: "ก.พ.", hours: Math.round(H * 0.35) },
+    { name: "มี.ค.", hours: Math.round(H * 0.55) },
+    { name: "เม.ย.", hours: Math.round(H * 0.75) },
+    { name: "พ.ค.", hours: Math.round(H * 0.90) },
+    { name: "มิ.ย.", hours: H },
+    { name: "ก.ค.", hours: H }
   ];
+
+  const hoursPct = Math.round((probationerProfile.completedHours / probationerProfile.requiredHours) * 100) || 0;
+
+  // Activities Logic
+  const userActivities = activities.filter(act => 
+    act.applicants.some(app => app.probationerId === probationerProfile.id || app.probationerId.replace("PB-", "") === probationerProfile.id.replace("PB-", ""))
+  );
+  
+  const completedCount = userActivities.filter(act => 
+    act.applicants.some(app => (app.probationerId === probationerProfile.id || app.probationerId.replace("PB-", "") === probationerProfile.id.replace("PB-", "")) && app.status === "เสร็จสิ้น")
+  ).length;
+  
+  const totalActivities = Math.max(probationerProfile.totalActivities, userActivities.length);
+  const displayCompleted = completedCount > 0 ? completedCount : Math.max(0, totalActivities - 1);
+  const displayPending = totalActivities - displayCompleted;
+
+  let displayActivities: any[] = userActivities.map(act => {
+    const applicant = act.applicants.find(app => app.probationerId === probationerProfile.id || app.probationerId.replace("PB-", "") === probationerProfile.id.replace("PB-", ""));
+    return {
+      title: act.title,
+      location: act.location,
+      date: act.date,
+      hours: act.hours,
+      status: applicant?.status || "เสร็จสิ้น",
+      category: act.category
+    };
+  });
+
+  if (displayActivities.length === 0) {
+    const mockTemplates = [
+      { title: "จัดระเบียบห้องสมุดโรงเรียน", location: "โรงเรียนวัดบ่อยาง", category: "โรงเรียน/การศึกษา", hours: 4 },
+      { title: "ทาสีรั้วกั้นทางจราจรชุมชน", location: "ชุมชนเทศบาลเมืองสงขลา", category: "เทศบาล/ชุมชน", hours: 6 },
+      { title: "บำเพ็ญล้างทำความสะอาดวิหาร", location: "วัดเขารูปช้าง", category: "วัด/ศาสนสถาน", hours: 4 },
+      { title: "ปลูกป่าชายเลนเฉลิมพระเกียรติ", location: "ชายฝั่งเก้าเส้ง", category: "สิ่งแวดล้อม", hours: 8 },
+      { title: "จัดเตรียมสถานที่งานประเพณี", location: "สวนสาธารณะสงขลา", category: "สาธารณประโยชน์", hours: 6 },
+      { title: "ช่วยงานคัดแยกขยะชุมชน", location: "ชุมชนสวนหมาก", category: "สาธารณประโยชน์", hours: 4 }
+    ];
+
+    let currentSum = 0;
+    const targetHours = probationerProfile.completedHours;
+    const startIdx = rawIdNum % mockTemplates.length;
+    
+    for (let i = 0; i < mockTemplates.length; i++) {
+      const template = mockTemplates[(startIdx + i) % mockTemplates.length];
+      if (currentSum + template.hours <= targetHours) {
+        displayActivities.push({
+          title: template.title,
+          location: template.location,
+          date: `2026-05-${String(28 - i * 4).padStart(2, "0")}`,
+          hours: template.hours,
+          status: "เสร็จสิ้น",
+          category: template.category
+        });
+        currentSum += template.hours;
+      }
+    }
+    
+    if (currentSum < targetHours) {
+      displayActivities.push({
+        title: "กิจกรรมบำเพ็ญประโยชน์ทั่วไป",
+        location: "สำนักงานคุมประพฤติจังหวัดสงขลา",
+        date: "2026-04-10",
+        hours: targetHours - currentSum,
+        status: "เสร็จสิ้น",
+        category: "สาธารณประโยชน์"
+      });
+    }
+  }
+
+  // Conduct Star Calculation
+  const conductStars = Math.round(probationerProfile.behaviorScore / 20) || 0;
 
   const handleQuickAccess = (id: string) => {
     setCurrentView(id);
@@ -67,8 +207,8 @@ export const ProbationerDashboard: React.FC = () => {
           <div className="flex items-center space-x-5 relative z-10">
             <div className="relative">
               <img
-                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=facearea&facepad=2.2&q=80"
-                alt="นายสมชาย ใจดี"
+                src={probationerProfile.avatarUrl || `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="p_default" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p_default)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="\'Sarabun\', sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">👤</text></svg>')}`}
+                alt={probationerProfile.name}
                 className="w-20 h-20 rounded-2xl object-cover ring-4 ring-blue-500/20 shadow-md"
               />
               <span className="absolute -bottom-1.5 -right-1.5 bg-emerald-500 text-white p-1 rounded-lg border-2 border-[#092c5c]">
@@ -80,29 +220,41 @@ export const ProbationerDashboard: React.FC = () => {
                 <span className="text-[11px] font-bold text-blue-400 tracking-wider">สวัสดีครับ</span>
               </div>
               <h2 className="text-xl font-black text-white flex items-center space-x-2 mt-0.5">
-                <span>นายสมชาย ใจดี</span>
-                <span className="text-xs font-bold text-amber-500">★ 5.0</span>
+                <span>{probationerProfile.name}</span>
+                <span className="text-xs font-bold text-amber-500">★ {(probationerProfile.behaviorScore / 20).toFixed(1)}</span>
               </h2>
               <div className="flex flex-wrap gap-x-3 gap-y-1.5 mt-2 text-slate-300">
                 <p className="text-xs flex items-center space-x-1.5">
                   <span className="text-slate-400">รหัสผู้ถูกคุมประพฤติ:</span>
                   <span className="font-mono font-bold text-amber-400 flex items-center space-x-1">
-                    <span>PB6705-123456</span>
+                    <span>{probationerProfile.id}</span>
                     <RefreshCw className="w-3 h-3 text-slate-400 cursor-pointer hover:rotate-45 transition-transform" />
                   </span>
                 </p>
                 <span className="text-slate-500">|</span>
                 <p className="text-xs">
-                  <span className="text-slate-400">คดี:</span> <span className="font-semibold text-white">ขับขี่ขณะมึนเมาสุรา</span>
+                  <span className="text-slate-400">คดี:</span> <span className="font-semibold text-white">{probationerProfile.charge}</span>
                 </p>
               </div>
             </div>
           </div>
 
           <div className="mt-4 md:mt-0 flex flex-col items-end space-y-2 relative z-10">
-            <span className="bg-amber-500/25 border border-amber-500/40 text-amber-300 text-[10px] font-bold px-3 py-1.5 rounded-full flex items-center space-x-1.5">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-              <span>อยู่ระหว่างคุมประพฤติ</span>
+            <span className={`border text-[10px] font-bold px-3 py-1.5 rounded-full flex items-center space-x-1.5 ${
+              probationerProfile.status === "เฝ้าระวังพิเศษ"
+                ? "bg-rose-500/25 border-rose-500/40 text-rose-300"
+                : probationerProfile.status === "ใกล้ครบกำหนด"
+                ? "bg-amber-500/25 border-amber-500/40 text-amber-300"
+                : "bg-emerald-500/25 border-emerald-500/40 text-emerald-300"
+            }`}>
+              <span className={`w-2 h-2 rounded-full animate-pulse ${
+                probationerProfile.status === "เฝ้าระวังพิเศษ"
+                  ? "bg-rose-400"
+                  : probationerProfile.status === "ใกล้ครบกำหนด"
+                  ? "bg-amber-400"
+                  : "bg-emerald-400"
+              }`} />
+              <span>{probationerProfile.status === "เฝ้าระวังพิเศษ" ? "เฝ้าระวังพิเศษ" : probationerProfile.status === "ใกล้ครบกำหนด" ? "ใกล้พ้นกำหนด" : "อยู่ระหว่างคุมประพฤติ"}</span>
             </span>
             <button 
               onClick={() => setCurrentView("PROFILE")}
@@ -124,18 +276,20 @@ export const ProbationerDashboard: React.FC = () => {
               <div>
                 <span className="text-[10px] text-blue-500 font-extrabold uppercase tracking-wider block">นัดหมายรายงานตัวครั้งถัดไป</span>
                 <h3 className="text-[16px] font-black text-slate-800 mt-0.5 leading-snug">
-                  20 พฤษภาคม 2567
+                  {formatThaiDate(finalAppointment.date)}
                 </h3>
               </div>
             </div>
-            <span className="bg-rose-500 text-white font-extrabold text-[10px] px-2.5 py-1 rounded-xl animate-pulse">
-              เหลืออีก 5 วัน
+            <span className={`font-extrabold text-[10px] px-2.5 py-1 rounded-xl animate-pulse ${
+              remainingDays <= 3 ? "bg-rose-500 text-white" : "bg-blue-600 text-white"
+            }`}>
+              {remainingDays <= 0 ? "ถึงกำหนดรายงานตัว" : `เหลืออีก ${remainingDays} วัน`}
             </span>
           </div>
           
           <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
             <div className="text-xs text-slate-500">
-              <span className="font-semibold text-slate-700">เวลา 08:30 น.</span> (สำนักงานสงขลา)
+              <span className="font-semibold text-slate-700">เวลา {finalAppointment.time} น.</span> (สำนักงานสงขลา)
             </div>
             <button
               onClick={() => setCurrentView("ONLINE_REPORT")}
@@ -147,6 +301,25 @@ export const ProbationerDashboard: React.FC = () => {
           </div>
         </div>
 
+      </div>
+
+      {/* SOS Alert Banner */}
+      <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-100 p-4.5 rounded-3xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center space-x-3.5">
+          <div className="p-3 bg-red-100 text-red-600 rounded-2xl border border-red-200 shrink-0">
+            <span className="font-bold text-sm">🆘 SOS</span>
+          </div>
+          <div>
+            <h4 className="text-xs font-black text-slate-800">ระบบติดต่อประสานงานกรณีเกิดเหตุฉุกเฉิน (SOS Emergency Call)</h4>
+            <p className="text-[11px] text-slate-500 mt-0.5">เกิดปัญหาพาหนะขัดข้อง ยางระเบิด เจ็บป่วยเฉินกะทันหัน หรือภัยพิบัติระว่างทางในการรายงานตัว / บริการสังคม? ส่งสัญญาณหาพนักงานสงขลาได้ทันที</p>
+          </div>
+        </div>
+        <button
+          onClick={() => setIsSosModalOpen(true)}
+          className="bg-red-600 hover:bg-red-700 text-white text-xs font-black py-2.5 px-5 rounded-2xl shadow transition-all shrink-0 animate-pulse"
+        >
+          ขอความช่วยเหลือฉุกเฉิน
+        </button>
       </div>
 
       {/* 2. Six Dynamic KPI Cards */}
@@ -161,14 +334,14 @@ export const ProbationerDashboard: React.FC = () => {
             </div>
           </div>
           <div className="mt-3">
-            <p className="text-2xl font-black text-slate-800 tracking-tight">150 / 200</p>
+            <p className="text-2xl font-black text-slate-800 tracking-tight">{probationerProfile.completedHours} / {probationerProfile.requiredHours}</p>
             <p className="text-[10px] text-slate-500 font-medium mt-0.5">ชั่วโมงสะสมรวม</p>
           </div>
           <div className="mt-3">
             <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-              <div className="bg-blue-600 h-full rounded-full" style={{ width: "75%" }} />
+              <div className="bg-blue-600 h-full rounded-full" style={{ width: `${hoursPct}%` }} />
             </div>
-            <span className="text-[10px] text-blue-600 font-bold block mt-1">คืบหน้า 75%</span>
+            <span className="text-[10px] text-blue-600 font-bold block mt-1">คืบหน้า {hoursPct}%</span>
           </div>
         </div>
 
@@ -181,11 +354,11 @@ export const ProbationerDashboard: React.FC = () => {
             </div>
           </div>
           <div className="mt-3">
-            <p className="text-2xl font-black text-slate-800 tracking-tight">6</p>
+            <p className="text-2xl font-black text-slate-800 tracking-tight">{totalActivities}</p>
             <p className="text-[10px] text-slate-500 font-medium mt-0.5">กิจกรรมสะสมทั้งหมด</p>
           </div>
           <div className="mt-3 flex items-center space-x-1.5 text-[10px] text-purple-600 font-bold bg-purple-50 py-1 px-2 rounded-lg border border-purple-100/50 w-fit">
-            <span>สำเร็จ 5 / ดำเนินการ 1</span>
+            <span>สำเร็จ {displayCompleted} / รอดำเนินการ {displayPending}</span>
           </div>
         </div>
 
@@ -198,12 +371,12 @@ export const ProbationerDashboard: React.FC = () => {
             </div>
           </div>
           <div className="mt-3">
-            <p className="text-2xl font-black text-slate-800 tracking-tight">8</p>
+            <p className="text-2xl font-black text-slate-800 tracking-tight">{probationerProfile.completedReports}</p>
             <p className="text-[10px] text-slate-500 font-medium mt-0.5">ครั้งที่ทำรายงานตัว</p>
           </div>
           <div className="mt-3 flex items-center space-x-1 text-[10px] text-emerald-600 font-bold bg-emerald-50 py-1 px-2 rounded-lg border border-emerald-100/50 w-fit">
             <CheckCircle className="w-3.5 h-3.5" />
-            <span>ครบถ้วน 8 ครั้ง</span>
+            <span>สำเร็จ {probationerProfile.completedReports} / {probationerProfile.totalReports} ครั้ง</span>
           </div>
         </div>
 
@@ -216,12 +389,15 @@ export const ProbationerDashboard: React.FC = () => {
             </div>
           </div>
           <div className="mt-3">
-            <p className="text-2xl font-black text-slate-800 tracking-tight">95</p>
+            <p className="text-2xl font-black text-slate-800 tracking-tight">{probationerProfile.behaviorScore}</p>
             <p className="text-[10px] text-slate-500 font-medium mt-0.5">คะแนนเต็ม 100</p>
           </div>
-          <div className="mt-3 flex items-center space-x-1">
+          <div className="mt-3 flex items-center space-x-0.5">
             {[...Array(5)].map((_, idx) => (
-              <Star key={idx} className="w-3 h-3 fill-amber-400 text-amber-400" />
+              <Star 
+                key={idx} 
+                className={`w-3 h-3 ${idx < conductStars ? "fill-amber-400 text-amber-400" : "text-slate-300"}`} 
+              />
             ))}
           </div>
         </div>
@@ -235,11 +411,11 @@ export const ProbationerDashboard: React.FC = () => {
             </div>
           </div>
           <div className="mt-3">
-            <p className="text-2xl font-black text-slate-800 tracking-tight">4 / 5</p>
+            <p className="text-2xl font-black text-slate-800 tracking-tight">{probationerProfile.documentCount} / {probationerProfile.totalDocuments}</p>
             <p className="text-[10px] text-slate-500 font-medium mt-0.5">รายการเอกสาร</p>
           </div>
           <div className="mt-3 flex items-center space-x-1.5 text-[10px] text-indigo-600 font-bold bg-indigo-50 py-1 px-2 rounded-lg border border-indigo-100/50 w-fit">
-            <span>ค้างส่ง 1 รายการ</span>
+            <span>ค้างส่ง {Math.max(0, probationerProfile.totalDocuments - probationerProfile.documentCount)} รายการ</span>
           </div>
         </div>
 
@@ -252,12 +428,18 @@ export const ProbationerDashboard: React.FC = () => {
             </div>
           </div>
           <div className="mt-3">
-            <p className="text-2xl font-black text-emerald-600 tracking-tight">ปกติ</p>
+            <p className={`text-2xl font-black tracking-tight ${
+              probationerProfile.status === "เฝ้าระวังพิเศษ"
+                ? "text-rose-600"
+                : probationerProfile.status === "ใกล้ครบกำหนด"
+                ? "text-amber-600"
+                : "text-emerald-600"
+            }`}>{probationerProfile.status}</p>
             <p className="text-[10px] text-slate-500 font-medium mt-0.5">สถานะพฤติกรรมรวม</p>
           </div>
-          <div className="mt-3 flex items-center space-x-1 text-[10px] text-emerald-600 font-bold bg-emerald-50 py-1 px-2 rounded-lg border border-emerald-100/50 w-fit">
+          <div className="mt-3 flex items-center space-x-1 text-[10px] font-bold py-1 px-2 rounded-lg border w-fit border-emerald-100/50 bg-emerald-50 text-emerald-600">
             <CheckCircle className="w-3.5 h-3.5" />
-            <span>ประวัติดีเยี่ยม</span>
+            <span>{probationerProfile.status === "เฝ้าระวังพิเศษ" ? "เฝ้าระวังพิเศษ" : "ประวัติดีเยี่ยม"}</span>
           </div>
         </div>
 
@@ -278,7 +460,7 @@ export const ProbationerDashboard: React.FC = () => {
               </div>
               <div className="mt-2.5 md:mt-0 flex items-center space-x-2">
                 <span className="text-xs text-blue-600 font-bold bg-blue-50 py-1 px-3 rounded-xl border border-blue-100">
-                  ชั่วโมงที่ต้องการ: 200 ชม.
+                  ชั่วโมงที่ต้องการ: {probationerProfile.requiredHours} ชม.
                 </span>
               </div>
             </div>
@@ -291,16 +473,16 @@ export const ProbationerDashboard: React.FC = () => {
                     {/* Circle Background track */}
                     <path className="text-slate-200/60" strokeWidth="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                     {/* Circle Colored Progress */}
-                    <path className="text-blue-600" strokeDasharray="75, 100" strokeWidth="3" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path className="text-blue-600" strokeDasharray={`${hoursPct}, 100`} strokeWidth="3" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                   </svg>
                   <div className="absolute flex flex-col items-center justify-center">
-                    <span className="text-2xl font-black text-slate-800 tracking-tight">75%</span>
+                    <span className="text-2xl font-black text-slate-800 tracking-tight">{hoursPct}%</span>
                     <span className="text-[10px] font-bold text-slate-400 uppercase mt-0.5">สำเร็จ</span>
                   </div>
                 </div>
                 <div className="mt-3">
-                  <p className="text-sm font-extrabold text-slate-800">150 / 200 ชั่วโมง</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">คงเหลืออีก 50 ชั่วโมง</p>
+                  <p className="text-sm font-extrabold text-slate-800">{probationerProfile.completedHours} / {probationerProfile.requiredHours} ชั่วโมง</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">คงเหลืออีก {Math.max(0, probationerProfile.requiredHours - probationerProfile.completedHours)} ชั่วโมง</p>
                 </div>
               </div>
 
@@ -310,7 +492,7 @@ export const ProbationerDashboard: React.FC = () => {
                   <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                     <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} tickLine={false} />
-                    <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} domain={[0, 200]} />
+                    <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} domain={[0, probationerProfile.requiredHours]} />
                     <Tooltip 
                       contentStyle={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", fontSize: "11px", fontWeight: "bold" }}
                       labelFormatter={(label) => `เดือน: ${label}`}
@@ -496,62 +678,43 @@ export const ProbationerDashboard: React.FC = () => {
 
             <div className="space-y-3.5">
               
-              {/* Activity Item 1 */}
-              <div className="p-3 bg-slate-50 hover:bg-slate-100/80 border border-slate-100 rounded-2xl flex items-center justify-between transition-colors">
-                <div className="flex items-center space-x-3 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
-                    <BookOpen className="w-5 h-5" />
+              {displayActivities.slice(0, 4).map((act, idx) => {
+                const bgClass = act.category === "วัด/ศาสนสถาน" ? "bg-amber-100 text-amber-600" :
+                                act.category === "โรงเรียน/การศึกษา" ? "bg-blue-100 text-blue-600" :
+                                act.category === "สิ่งแวดล้อม" ? "bg-emerald-100 text-emerald-600" :
+                                "bg-purple-100 text-purple-600";
+                
+                return (
+                  <div key={idx} className="p-3 bg-slate-50 hover:bg-slate-100/80 border border-slate-100 rounded-2xl flex items-center justify-between transition-colors">
+                    <div className="flex items-center space-x-3 min-w-0">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${bgClass}`}>
+                        {act.category === "วัด/ศาสนสถาน" ? <Sparkles className="w-5 h-5" /> :
+                         act.category === "โรงเรียน/การศึกษา" ? <BookOpen className="w-5 h-5" /> :
+                         <HeartHandshake className="w-5 h-5" />}
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-extrabold text-slate-800 truncate">{act.title}</h4>
+                        <p className="text-[10px] text-slate-400 truncate mt-0.5">{act.location} ({formatThaiDate(act.date)})</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                        act.status === "เสร็จสิ้น" ? "bg-emerald-100 text-emerald-800" :
+                        act.status === "อนุมัติแล้ว" || act.status === "เช็กอินแล้ว" ? "bg-blue-100 text-blue-800" :
+                        "bg-amber-100 text-amber-800"
+                      }`}>
+                        {act.status}
+                      </span>
+                      <p className="text-xs font-black text-slate-700 mt-1 font-mono">{act.hours} ชม.</p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <h4 className="text-xs font-extrabold text-slate-800 truncate">จัดระเบียบห้องสมุด</h4>
-                    <p className="text-[10px] text-slate-400 truncate mt-0.5">โรงเรียนวัดปทุมคงคา (12 พ.ค. 2567)</p>
-                  </div>
+                );
+              })}
+              {displayActivities.length === 0 && (
+                <div className="text-center py-6">
+                  <p className="text-xs text-slate-400">ยังไม่มีประวัติกิจกรรมบริการสังคม</p>
                 </div>
-                <div className="text-right">
-                  <span className="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
-                    เสร็จสิ้น
-                  </span>
-                  <p className="text-xs font-black text-slate-700 mt-1 font-mono">4 ชม.</p>
-                </div>
-              </div>
-
-              {/* Activity Item 2 */}
-              <div className="p-3 bg-slate-50 hover:bg-slate-100/80 border border-slate-100 rounded-2xl flex items-center justify-between transition-colors">
-                <div className="flex items-center space-x-3 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
-                    <HeartHandshake className="w-5 h-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="text-xs font-extrabold text-slate-800 truncate">ทาสีรั้วกั้นทางจราจร</h4>
-                    <p className="text-[10px] text-slate-400 truncate mt-0.5">ชุมชนเทศบาลคลองหลวง (5 พ.ค. 2567)</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
-                    เสร็จสิ้น
-                  </span>
-                  <p className="text-xs font-black text-slate-700 mt-1 font-mono">6 ชม.</p>
-                </div>
-              </div>
-
-              {/* Activity Item 3 */}
-              <div className="p-3 bg-slate-50 hover:bg-slate-100/80 border border-slate-100 rounded-2xl flex items-center justify-between transition-colors">
-                <div className="flex items-center space-x-3 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-[#fffbeb] text-amber-600 flex items-center justify-center shrink-0">
-                    <Sparkles className="w-5 h-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="text-xs font-extrabold text-slate-800 truncate">บำเพ็ญล้างทำความสะอาด</h4>
-                    <p className="text-[10px] text-slate-400 truncate mt-0.5">วัดทุ่งสองห้อง (28 เม.ย. 2567)</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
-                    เสร็จสิ้น
-                  </span>
-                  <p className="text-xs font-black text-slate-700 mt-1 font-mono">4 ชม.</p>
-                </div>
-              </div>
+              )}
 
             </div>
           </div>
@@ -651,6 +814,139 @@ export const ProbationerDashboard: React.FC = () => {
 
       {/* 4. Gov quote Banner */}
       <GovBanner />
+
+      {/* SOS Emergency Modal Overlay */}
+      {isSosModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-lg overflow-hidden">
+            
+            {/* Modal Header */}
+            <div className="bg-red-600 text-white p-5 flex items-center justify-between">
+              <div className="flex items-center space-x-2.5">
+                <span className="text-xl">🆘</span>
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-wider">ขอความช่วยเหลือกรณีจำเป็นเร่งด่วน (SOS)</h3>
+                  <p className="text-[10px] text-red-100 mt-0.5 font-medium">ส่งสัญญาณด่วนพร้อมพิกัดดาวเทียมไปยังเจ้าหน้าที่จังหวัดสงขลา</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setIsSosModalOpen(false);
+                  setSosSuccess(false);
+                  setSosDetails("");
+                }}
+                className="text-white hover:text-red-200 text-xs font-black cursor-pointer"
+              >
+                ✕ ปิด
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            {!sosSuccess ? (
+              <div className="p-6 space-y-4">
+                
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-black text-slate-700">ระบุสาเหตุ / ปัญหาความขัดข้องหลัก:</label>
+                  <select
+                    value={sosReason}
+                    onChange={(e) => setSosReason(e.target.value)}
+                    className="w-full p-2.5 border border-slate-300 rounded-xl text-xs bg-slate-50 outline-none focus:ring-2 focus:ring-red-500/30 text-slate-800 font-bold"
+                  >
+                    <option value="พาหนะเดินทางชำรุดเสียหาย">🚗 พาหนะเดินทางชำรุดเสียหาย (ยางระเบิด/เครื่องดับ)</option>
+                    <option value="เจ็บป่วยฉุกเฉินกะทันหัน">🏥 เจ็บป่วยฉุกเฉินกะทันหัน / ประสบอุบัติเหตุส่วนบุคคล</option>
+                    <option value="เกิดภัยพิบัติธรรมชาติ / อุทกภัย">⛈️ เกิดภัยพิบัติธรรมชาติ / อุทกภัยน้ำท่วมเฉียบพลัน</option>
+                    <option value="ปัญหาความไม่ปลอดภัยในครอบครัว">🏠 ปัญหาความไม่ปลอดภัย / เหตุจำเป็นเร่งด่วนอื่นๆ</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-black text-slate-700">รายละเอียดสถานการณ์ / สถานที่เกิดเหตุ:</label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={sosDetails}
+                    onChange={(e) => setSosDetails(e.target.value)}
+                    placeholder="อธิบายปัญหาและสิ่งที่ต้องการให้เจ้าหน้าที่ประสานช่วยเหลือ เช่น 'รถมอเตอร์ไซค์โซ่ขาดขณะจะเดินทางไปวัดเขารูปช้างเพื่อทำกิจกรรมอาสา'"
+                    className="w-full p-3 border border-slate-300 rounded-xl text-xs bg-slate-50 focus:bg-white outline-none focus:ring-2 focus:ring-red-500/30 text-slate-800 font-semibold leading-relaxed"
+                  />
+                </div>
+
+                {/* Geolocation check inside modal */}
+                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 flex items-center justify-between text-xs font-bold">
+                  <div className="flex items-center space-x-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+                    <span className="text-slate-600">พิกัดดาวเทียมเพื่อยืนยันพ้นทัณฑ์บน:</span>
+                  </div>
+                  <span className="font-mono text-slate-800 bg-white border border-slate-100 py-1 px-2.5 rounded-lg shadow-sm">
+                    7.1824° N, 100.5960° E
+                  </span>
+                </div>
+
+                <div className="pt-2 border-t border-slate-100 flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsSosModalOpen(false)}
+                    className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-slate-800 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                  >
+                    ยกเลิก
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!sosDetails || isSosSubmitting}
+                    onClick={() => {
+                      setIsSosSubmitting(true);
+                      setTimeout(() => {
+                        addEmergencyRequest(sosReason, sosDetails, 7.1824, 100.5960);
+                        setIsSosSubmitting(false);
+                        setSosSuccess(true);
+                      }, 1200);
+                    }}
+                    className={`text-xs font-black py-2 px-5 rounded-xl shadow transition-all flex items-center space-x-1.5 cursor-pointer ${
+                      sosDetails && !isSosSubmitting
+                        ? "bg-red-600 hover:bg-red-700 text-white"
+                        : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                    }`}
+                  >
+                    {isSosSubmitting ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>กำลังยื่น SOS...</span>
+                      </>
+                    ) : (
+                      <span>ส่งสัญญาณช่วยเหลือเร่งด่วน</span>
+                    )}
+                  </button>
+                </div>
+
+              </div>
+            ) : (
+              <div className="p-8 text-center space-y-5">
+                <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center text-red-600 mx-auto text-xl shadow-inner border border-red-200 animate-bounce">
+                  🚨
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-black text-slate-800">ส่งสัญญาณขอความช่วยเหลือสำเร็จ!</h4>
+                  <p className="text-[11px] text-slate-500 leading-relaxed font-semibold">
+                    สัญญาณ SOS พร้อมพิกัดดาวเทียมสงขลา อธิบายความเดือดร้อนของคุณ ได้รับการยิงข้อมูลเข้าสู่หน้าแดชบอร์ดเจ้าหน้าที่เรียบร้อยแล้ว พนักงานคุมประพฤติจะรีบติดต่อกลับโดยเร็วที่สุด
+                  </p>
+                </div>
+                
+                <button
+                  onClick={() => {
+                    setIsSosModalOpen(false);
+                    setSosSuccess(false);
+                    setSosDetails("");
+                  }}
+                  className="bg-slate-900 hover:bg-slate-800 text-white py-2 px-6 rounded-xl text-xs font-black transition-all shadow"
+                >
+                  รับทราบและปิดหน้านี้
+                </button>
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

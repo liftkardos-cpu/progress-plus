@@ -1,3 +1,14 @@
+// ==========================================
+// 🇹🇭 ไฟล์: /src/views/officer/OfficerDashboard.tsx
+// คำอธิบาย: แผงควบคุมสถิติหลักของเจ้าหน้าที่คุมประพฤติ (Officer Dashboard)
+// โครงสร้างไฟล์:
+//   - ส่วนนำเข้าข้อมูลและไลบรารีสถิติ (Imports, Recharts)
+//   - การคำนวณและข้อมูลจำลองรายเดือนและผลลัพธ์ (Statistics Data)
+//   - แผงสถิติรวมแบบตัวเลข (Overview Counter Stats Cards)
+//   - กราฟแนวโน้มคดีรายเดือนและแผนภูมิสัดส่วนประเภทความผิด (Charts & Visualizations)
+//   - รายการคดีความเคลื่อนไหวล่าสุดและการแจ้งเตือนสำคัญ (Recent Activities & Key Alerts)
+// ==========================================
+
 import React, { useState } from "react";
 import { useApp } from "../../context/AppContext";
 import { 
@@ -23,12 +34,20 @@ import {
   Legend, 
   PieChart, 
   Pie, 
-  Cell 
+  Cell,
+  BarChart,
+  Bar
 } from "recharts";
 
 export const OfficerDashboard: React.FC = () => {
-  const { currentView, setCurrentView } = useApp();
+  const { currentView, setCurrentView, emergencyRequests, updateEmergencyRequestStatus, probationers } = useApp();
   const [fiscalYear, setFiscalYear] = useState("ปีงบประมาณ 2567");
+  const [notifiedCases, setNotifiedCases] = useState<string[]>([]);
+
+  const handleSendAlert = (caseId: string) => {
+    setNotifiedCases(prev => [...prev, caseId]);
+    alert("📢 ส่งหนังสือเตือนวินัยอัตโนมัติสำเร็จ! ส่งสำเนาคำเตือนไปทาง SMS มือถือ และลงทะเบียนบันทึกพ้นทัณฑ์บนขัดรายงานตัวเรียบร้อย");
+  };
 
   // Monthly trends mock data matching the line chart in Image 1
   const monthlyData = [
@@ -65,6 +84,50 @@ export const OfficerDashboard: React.FC = () => {
     { name: "คุมประพฤติอยู่", value: 8742, color: "#1E40AF" },
     { name: "ใกล้สิ้นสุด", value: 2145, color: "#60A5FA" },
     { name: "สิ้นสุดแล้ว", value: 1959, color: "#10B981" }
+  ];
+
+  // Monthly report-in compliance data (for Bar Chart visualization)
+  const monthlyReportStatusData = [
+    { name: "ม.ค.", "รายงานตัวตรงกำหนด": 520, "รายงานตัวล่าช้า": 45, "ขาดรายงานตัว": 38 },
+    { name: "ก.พ.", "รายงานตัวตรงกำหนด": 540, "รายงานตัวล่าช้า": 32, "ขาดรายงานตัว": 41 },
+    { name: "มี.ค.", "รายงานตัวตรงกำหนด": 500, "รายงานตัวล่าช้า": 55, "ขาดรายงานตัว": 29 },
+    { name: "เม.ย.", "รายงานตัวตรงกำหนด": 560, "รายงานตัวล่าช้า": 42, "ขาดรายงานตัว": 35 },
+    { name: "พ.ค.", "รายงานตัวตรงกำหนด": 580, "รายงานตัวล่าช้า": 30, "ขาดรายงานตัว": 22 },
+    { name: "มิ.ย.", "รายงานตัวตรงกำหนด": 610, "รายงานตัวล่าช้า": 25, "ขาดรายงานตัว": 15 },
+  ];
+
+  // Cases that missed reporting in Songkhla province
+  const SONGKHLA_MISSED_CASES = [
+    {
+      id: "PB6705-123458",
+      name: "นายทวีศักดิ์ มั่นคง",
+      subdistrict: "ต.บ่อยาง อ.เมืองสงขลา",
+      missedCount: 2,
+      lastAttempt: "20 มิถุนายน 2569",
+      status: "ขาดรายงานตัว",
+      phone: "089-761-xxxx",
+      riskLevel: "สูง"
+    },
+    {
+      id: "PB6705-123490",
+      name: "นายรณชัย ศรีสุข",
+      subdistrict: "ต.พะวง อ.เมืองสงขลา",
+      missedCount: 1,
+      lastAttempt: "18 มิถุนายน 2569",
+      status: "ขาดรายงานตัว",
+      phone: "081-342-xxxx",
+      riskLevel: "ปานกลาง"
+    },
+    {
+      id: "PB6705-123512",
+      name: "นายวิศรุต สุวรรณ",
+      subdistrict: "ต.หาดใหญ่ อ.หาดใหญ่",
+      missedCount: 3,
+      lastAttempt: "10 มิถุนายน 2569",
+      status: "พ้นกำหนดเฉียบพลัน",
+      phone: "082-995-xxxx",
+      riskLevel: "สูงมาก"
+    }
   ];
 
   // Age groups mock values (bar chart)
@@ -266,7 +329,7 @@ export const OfficerDashboard: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <span className="flex items-center space-x-1.5">
                       <span className="w-4 h-4 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-[9px] font-black">5</span>
-                      <span className="text-[11px]">ปทุมธานี</span>
+                      <span className="text-[11px]">สงขลา</span>
                     </span>
                     <span className="text-slate-500 text-[11px]">512 คน</span>
                   </div>
@@ -296,6 +359,94 @@ export const OfficerDashboard: React.FC = () => {
                 <span>สูงมาก</span>
               </span>
             </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* 🇹🇭 แดชบอร์ดสรุปสถิติผู้ขาดรายงานตัวและกราฟวิเคราะห์รายเดือน (Songkhla Compliance Dashboard) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* กราฟแท่งแสดงสถานะการรายงานตัวรายเดือน (Bar Chart Data Visualization) */}
+        <div className="lg:col-span-6 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-50 pb-3">
+            <div>
+              <h3 className="text-sm font-black text-[#0f2d59]">แผนภูมิวิเคราะห์สถานะรายงานตัวรายเดือน (Monthly Compliance Chart)</h3>
+              <p className="text-[10px] text-slate-400 mt-0.5 font-semibold">แสดงสัดส่วนผู้รายงานตัวตรงนัด ล่าช้า และผู้ขาดรายงานตัว เพื่อการวางแผนกำลังพล</p>
+            </div>
+            <span className="bg-blue-50 text-blue-600 font-extrabold text-[10px] py-1 px-2.5 rounded-lg">
+              ข้อมูลสงขลาล่าสุด
+            </span>
+          </div>
+
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={monthlyReportStatusData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748B", fontWeight: "bold" }} stroke="#E2E8F0" />
+                <YAxis tick={{ fontSize: 10, fill: "#64748B", fontWeight: "bold" }} stroke="#E2E8F0" />
+                <Tooltip />
+                <Legend tick={{ fontSize: 10 }} />
+                <Bar dataKey="รายงานตัวตรงกำหนด" fill="#10B981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="รายงานตัวล่าช้า" fill="#F59E0B" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="ขาดรายงานตัว" fill="#EF4444" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* ตารางเคสที่ค้างชำระ/ขาดรายงานตัวในพื้นที่สงขลา (Songkhla Overdue & Missed Case Tracker) */}
+        <div className="lg:col-span-6 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4 flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-50 pb-3">
+              <div>
+                <h3 className="text-sm font-black text-red-600">เคสค้างรายงานตัว / ขัดวินัยคุมประพฤติ (จังหวัดสงขลา)</h3>
+                <p className="text-[10px] text-slate-400 mt-0.5 font-semibold">ระบบแจ้งเตือนอัตโนมัติแจ้งสิทธิ์ตามรายชื่อผู้ที่ขาดนัดรายงานตัวในพิกัดสงขลาล่าสุด</p>
+              </div>
+              <span className="bg-red-50 text-red-600 font-extrabold text-[10px] py-1 px-2.5 rounded-lg animate-pulse">
+                ระวังพิเศษ
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {SONGKHLA_MISSED_CASES.map((item) => (
+                <div key={item.id} className="p-3 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-between text-xs hover:border-slate-300 transition-colors">
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-black text-slate-800">{item.name}</span>
+                      <span className="font-mono text-[9px] bg-slate-200 px-1.5 py-0.5 rounded text-slate-600 font-bold">{item.id}</span>
+                      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-lg ${
+                        item.riskLevel === "สูงมาก" ? "bg-red-100 text-red-600" : item.riskLevel === "สูง" ? "bg-orange-100 text-orange-600" : "bg-amber-100 text-amber-600"
+                      }`}>
+                        ความเสี่ยง {item.riskLevel}
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-slate-500 font-semibold space-x-2">
+                      <span>📍 พิกัด: {item.subdistrict}</span>
+                      <span>•</span>
+                      <span className="text-red-500 font-bold">ขาดรายงานตัว {item.missedCount} ครั้ง</span>
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={() => handleSendAlert(item.id)}
+                    disabled={notifiedCases.includes(item.id)}
+                    className={`text-[10px] font-black py-1.5 px-3 rounded-lg transition-all shadow-xs ${
+                      notifiedCases.includes(item.id)
+                        ? "bg-emerald-100 text-emerald-700 cursor-default"
+                        : "bg-red-600 hover:bg-red-700 text-white cursor-pointer"
+                    }`}
+                  >
+                    {notifiedCases.includes(item.id) ? "✓ เตือนแล้ว" : "⚡ เตือนอัตโนมัติ"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-red-50/50 p-3 rounded-xl border border-red-100 text-[10px] text-red-700 font-bold leading-relaxed flex items-center space-x-2 mt-3">
+            <span>💡</span>
+            <span><b>คำแนะนำเจ้าหน้าที่:</b> คุณสามารถคลิกส่งแจ้งเตือนอัตโนมัติ เพื่อยิงเอกสารทวงวินัยและข้อความแจ้งทางมือถือไปยังผู้มีรายชื่อนอกกำหนดทันที</span>
           </div>
         </div>
 
@@ -462,6 +613,74 @@ export const OfficerDashboard: React.FC = () => {
 
       </div>
 
+      {/* 🚨 รายการคำร้องขอช่วยเหลือฉุกเฉิน (SOS Emergency Requests Queue) */}
+      <div className="bg-white p-6 rounded-2xl border border-red-100 shadow-sm space-y-4">
+        <div className="flex items-center justify-between border-b border-red-50 pb-3">
+          <div className="flex items-center space-x-2">
+            <span className="text-lg">🚨</span>
+            <div>
+              <h3 className="text-sm font-black text-red-600">กล่องรับเรื่องร้องเรียนช่วยเหลือฉุกเฉินระดับสูง (SOS Live Queue)</h3>
+              <p className="text-[10px] text-slate-400 mt-0.5 font-semibold">รับเรื่องแจ้งจากผู้ถูกคุมประพฤติที่มีปัญหาฉุกเฉินกะทันหัน หรือปัญหาการเดินทางในสงขลา</p>
+            </div>
+          </div>
+          <span className="bg-red-50 text-red-600 font-extrabold text-[10.5px] py-1 px-3 rounded-full flex items-center space-x-1 animate-pulse">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-600" />
+            <span>มีสายร้องขอ {emergencyRequests.filter(r => r.status === "รอการติดต่อกลับ").length} เคสใหม่</span>
+          </span>
+        </div>
+
+        {emergencyRequests.length === 0 ? (
+          <div className="text-center py-8 text-xs text-slate-400 font-semibold">
+            ไม่มีคำร้องขอความช่วยเหลือฉุกเฉินในขณะนี้
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {emergencyRequests.map((req) => (
+              <div key={req.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between space-y-3 hover:border-red-200 transition-all">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[12px] font-black text-slate-800">{req.probationerName}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      req.status === "รอการติดต่อกลับ" ? "bg-red-100 text-red-600 animate-pulse" : req.status === "กำลังดำเนินการ" ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"
+                    }`}>
+                      {req.status}
+                    </span>
+                  </div>
+
+                  <div className="text-[11px] text-slate-600 font-semibold space-y-1">
+                    <p className="text-slate-800"><b>เหตุขัดข้อง:</b> <span className="text-red-600 font-bold">{req.reason}</span></p>
+                    <p className="leading-relaxed"><b>คำอธิบาย:</b> {req.details}</p>
+                    <p className="text-slate-400 text-[10px]"><b>แจ้งเมื่อ:</b> {req.timestamp} • 📍 พิกัด GPS: {req.location.lat.toFixed(4)}, {req.location.lng.toFixed(4)}</p>
+                  </div>
+                </div>
+
+                {req.status !== "ช่วยเหลือแล้ว" && (
+                  <div className="pt-2 border-t border-slate-100 flex justify-end space-x-2">
+                    {req.status === "รอการติดต่อกลับ" && (
+                      <button
+                        onClick={() => updateEmergencyRequestStatus(req.id, "กำลังดำเนินการ")}
+                        className="bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-bold py-1.5 px-3 rounded-lg transition-all cursor-pointer"
+                      >
+                        📞 รับเรื่องประสานงาน
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        updateEmergencyRequestStatus(req.id, "ช่วยเหลือแล้ว");
+                        alert(`✅ ทำการส่งพนักงานสงขลาเข้าไปช่วยเหลือคุณ ${req.probationerName} หรือติดต่อประสานงานเสร็จสิ้นแล้ว`);
+                      }}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold py-1.5 px-3 rounded-lg transition-all cursor-pointer"
+                    >
+                      ✓ บันทึกว่าช่วยเหลือแล้ว
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Row 4: Recent Activities, Important Alerts, and Today's Mission Checklist */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
@@ -474,7 +693,7 @@ export const OfficerDashboard: React.FC = () => {
             <div className="flex items-start justify-between">
               <div className="flex items-center space-x-3">
                 <img 
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" 
+                  src={`data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="p_วสันต์" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#022c22"/><stop offset="100%" stop-color="#064e3b"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p_วสันต์)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="\'Sarabun\', sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ว</text></svg>')}`} 
                   alt="Avatar" 
                   className="w-9 h-9 rounded-full object-cover ring-2 ring-slate-100"
                 />

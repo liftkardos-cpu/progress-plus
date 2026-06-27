@@ -1,3 +1,13 @@
+// ==========================================
+// 🇹🇭 ไฟล์: /src/types.ts
+// คำอธิบาย: รวบรวมนิยามโครงสร้างข้อมูลและสากลอินเตอร์เฟส (TypeScript Types and Interfaces Declarations)
+// โครงสร้างไฟล์:
+//   - UserRole: บทบาทผู้ใช้ทั้ง 3 ฝั่ง (ผู้ถูกคุมประพฤติ, เจ้าหน้าที่, และหน่วยงานภาคี)
+//   - ProfileData: อินเตอร์เฟสจัดเก็บรายละเอียดคดีและประวัติผู้ถูกควบคุมตัว
+//   - Activity, Job, Course, Appointment: รูปแบบข้อมูลกิจกรรม งาน อาชีพ และกำหนดรายงานตัว
+//   - NotificationItem, ChatMessage: รูปแบบข้อมูลแจ้งเตือนและระบบห้องแชต
+// ==========================================
+
 export type UserRole = "PROBATIONER" | "OFFICER" | "PARTNER";
 
 export interface ProfileData {
@@ -121,3 +131,40 @@ export interface ChatMessage {
   text: string;
   timestamp: Date;
 }
+
+export interface EmergencyRequest {
+  id: string;
+  probationerId: string;
+  probationerName: string;
+  reason: string;
+  details: string;
+  location: { lat: number; lng: number };
+  timestamp: string;
+  status: "รอการติดต่อกลับ" | "ช่วยเหลือแล้ว" | "กำลังดำเนินการ";
+}
+
+export interface ObservationNote {
+  id: string;
+  probationerId: string;
+  probationerName: string;
+  content: string;
+  timestamp: string;
+  officerName: string;
+}
+
+export interface RiskAssessmentRecord {
+  id: string;
+  probationerId: string;
+  probationerName: string;
+  date: string;
+  crimeHistory: number;
+  drugUsage: number;
+  environment: number;
+  compliance: number;
+  totalScore: number;
+  riskLevel: string;
+  recommendation: string;
+  officerName: string;
+}
+
+

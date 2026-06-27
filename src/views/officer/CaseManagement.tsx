@@ -1,3 +1,13 @@
+// ==========================================
+// 🇹🇭 ไฟล์: /src/views/officer/CaseManagement.tsx
+// คำอธิบาย: หน้าจอจัดการประวัติข้อมูลผู้ถูกคุมประพฤติ (Case Management View)
+// โครงสร้างไฟล์:
+//   - ส่วนนำเข้าข้อมูลและโมดูลเชื่อมต่อ (Imports, Types)
+//   - ตัวแปรค้นหาและการประเมินพฤติกรรม (Filtering & Behavioral Scoring)
+//   - ตารางรายชื่อคดีและระดับความเสี่ยง (Probationers List)
+//   - รายละเอียดประวัติ ข้อมูลที่อยู่ศาลเจ้าของคดี และกิจกรรมที่ผ่านเกณฑ์ (Profile Details Page)
+// ==========================================
+
 import React, { useState } from "react";
 import { useApp } from "../../context/AppContext";
 import { 
@@ -21,11 +31,12 @@ import {
 import { ProfileData } from "../../types";
 
 export const CaseManagement: React.FC = () => {
-  const { probationersList, selectProbationer, updateBehaviorScore } = useApp();
+  const { probationersList, selectProbationer, updateBehaviorScore, observationNotes, addObservationNote } = useApp();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ทั้งหมด");
   const [chargeFilter, setChargeFilter] = useState("ทั้งหมด");
   const [selectedProbationer, setSelectedProbationer] = useState<ProfileData | null>(null);
+  const [diaryContent, setDiaryContent] = useState("");
   
   // Scoring state
   const [showScoreModal, setShowScoreModal] = useState(false);
@@ -39,8 +50,8 @@ export const CaseManagement: React.FC = () => {
       name: "นายสมชาย ใจดี",
       age: 28,
       gender: "ชาย",
-      avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80",
-      charge: "ขับขี่รถจักรยานยนต์ขณะมึนเมาสุราและขับรถโดยประมาทหวาดเสียว",
+      avatarUrl: `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="fb_0" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#fb_0)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="'Sarabun', sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ส</text></svg>`)}`,
+      charge: "ขับรถในขณะมึนเมาสุราเป็นเหตุให้ผู้อื่นได้รับอันตรายแก่กายหรือจิตใจ (พ.ร.บ.จราจรทางบก พ.ศ. 2522)",
       probationPeriod: { start: "20 พฤษภาคม 2567", end: "20 พฤษภาคม 2568", remainingDays: 324 },
       behaviorScore: 95,
       completedHours: 36,
@@ -52,8 +63,8 @@ export const CaseManagement: React.FC = () => {
       name: "นายธนวัฒน์ รักดี",
       age: 24,
       gender: "ชาย",
-      avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80",
-      charge: "มียาเสพติดให้โทษประเภท 1 (ยาบ้า) ไว้ในครอบครองเพื่อเสพ",
+      avatarUrl: `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="fb_1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#020617"/><stop offset="100%" stop-color="#0f172a"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#fb_1)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="'Sarabun', sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ธ</text></svg>`)}`,
+      charge: "มีไว้ในครอบครองซึ่งยาเสพติดให้โทษประเภท 1 (เมทแอมเฟตามีน/ยาบ้า) เพื่อเสพโดยไม่ได้รับอนุญาต (ประมวลกฎหมายยาเสพติด พ.ศ. 2564)",
       probationPeriod: { start: "15 มีนาคม 2567", end: "15 มีนาคม 2568", remainingDays: 258 },
       behaviorScore: 68,
       completedHours: 12,
@@ -65,8 +76,8 @@ export const CaseManagement: React.FC = () => {
       name: "นายวิชัย ใจกล้า",
       age: 32,
       gender: "ชาย",
-      avatarUrl: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80",
-      charge: "ขับรถขณะมึนเมาสุราเฉี่ยวชนทรัพย์สินผู้อื่นเสียหายสาหัส",
+      avatarUrl: `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="fb_2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#172554"/><stop offset="100%" stop-color="#1e3a8a"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#fb_2)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="'Sarabun', sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ว</text></svg>`)}`,
+      charge: "ขับรถในขณะหย่อนความสามารถในอันที่จะขับขี่และก่อให้เกิดความเสียหายแก่ทรัพย์สินผู้อื่น (พ.ร.บ.จราจรทางบก พ.ศ. 2522)",
       probationPeriod: { start: "10 มกราคม 2567", end: "10 มกราคม 2568", remainingDays: 198 },
       behaviorScore: 88,
       completedHours: 40,
@@ -78,8 +89,8 @@ export const CaseManagement: React.FC = () => {
       name: "นางสาวสมใจ นึกงาม",
       age: 29,
       gender: "หญิง",
-      avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
-      charge: "ร่วมกันลักทรัพย์ในเวลากลางคืนโดยมีหรือใช้อาวุธ",
+      avatarUrl: `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="fb_3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4c0519"/><stop offset="100%" stop-color="#881337"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#fb_3)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="'Sarabun', sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ส</text></svg>`)}`,
+      charge: "บุกรุกเคหสถานของผู้อื่นในเวลากลางคืนโดยร่วมกันกระทำความผิด (ประมวลกฎหมายอาญา มาตรา 365)",
       probationPeriod: { start: "05 มิถุนายน 2567", end: "05 มิถุนายน 2568", remainingDays: 345 },
       behaviorScore: 92,
       completedHours: 18,
@@ -359,7 +370,7 @@ export const CaseManagement: React.FC = () => {
       {/* MODAL 1: Detail Case Probationer Profile modal */}
       {selectedProbationer && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl relative border border-slate-100 animate-fade-in space-y-6">
+          <div className="bg-white rounded-3xl max-w-3xl w-full p-6 shadow-2xl relative border border-slate-100 animate-fade-in space-y-5 max-h-[92vh] overflow-y-auto">
             
             {/* Header info modal */}
             <div className="flex items-start justify-between border-b border-slate-100 pb-4">
@@ -378,7 +389,10 @@ export const CaseManagement: React.FC = () => {
                 </div>
               </div>
               <button 
-                onClick={() => setSelectedProbationer(null)}
+                onClick={() => {
+                  setSelectedProbationer(null);
+                  setDiaryContent("");
+                }}
                 className="text-slate-400 hover:text-slate-600 text-base font-bold bg-slate-50 hover:bg-slate-100 p-2 rounded-full"
               >
                 ✕
@@ -392,12 +406,12 @@ export const CaseManagement: React.FC = () => {
                 <p>อายุ: <span className="font-medium text-slate-600">{selectedProbationer.age} ปี</span></p>
                 <p>เลขบัตรประจำตัว: <span className="font-mono font-semibold text-slate-600">1-2345-67890-12-3</span></p>
                 <p>เบอร์ติดต่อ: <span className="font-mono font-medium text-slate-600">081-234-5678</span></p>
-                <p>ที่อยู่: <span className="font-medium text-slate-600">จ.ปทุมธานี</span></p>
+                <p>ที่อยู่: <span className="font-medium text-slate-600">จ.สงขลา</span></p>
               </div>
 
               <div className="p-3.5 bg-slate-50 rounded-xl space-y-1.5">
                 <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">รายละเอียดทางคดีหลัก</span>
-                <p>ศาลวินิจฉัย: <span className="font-medium text-slate-600">ศาลแขวงจังหวัดปทุมธานี</span></p>
+                <p>ศาลวินิจฉัย: <span className="font-medium text-slate-600">ศาลแขวงสงขลา / ศาลจังหวัดสงขลา</span></p>
                 <p>เลขที่คดีแดง: <span className="font-mono text-slate-600">อ.1234/2567</span></p>
                 <p>ข้อหาฟ้อง: <span className="font-medium text-slate-600 line-clamp-2">{selectedProbationer.charge}</span></p>
               </div>
@@ -406,26 +420,89 @@ export const CaseManagement: React.FC = () => {
             {/* Sentence conditions list mockup */}
             <div className="space-y-2">
               <span className="text-xs font-black text-[#0f2d59] block">เงื่อนไขการคุมประพฤติและวินัยความมั่นคง</span>
-              <div className="space-y-1.5 text-xs text-slate-600 font-medium">
-                <div className="flex items-center space-x-2 bg-slate-50 p-2 rounded-lg">
-                  <span className="text-blue-600">✔</span>
-                  <span>รายงานตัวสม่ำเสมอ รวม 12 ครั้งใน 1 ปีการศึกษา</span>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] text-slate-600 font-medium">
+                <div className="flex items-center space-x-2 bg-slate-50 p-2.5 rounded-lg">
+                  <span className="text-emerald-600 font-bold text-xs">✔</span>
+                  <span>รายงานตัว 12 ครั้งใน 1 ปี</span>
                 </div>
-                <div className="flex items-center space-x-2 bg-slate-50 p-2 rounded-lg">
-                  <span className="text-blue-600">✔</span>
-                  <span>เข้าร่วมบำเพ็ญสาธารณประโยชน์บริการสังคมเป็นจำนวน {selectedProbationer.requiredHours} ชั่วโมง</span>
+                <div className="flex items-center space-x-2 bg-slate-50 p-2.5 rounded-lg">
+                  <span className="text-emerald-600 font-bold text-xs">✔</span>
+                  <span>งานอาสา {selectedProbationer.requiredHours} ชั่วโมง</span>
                 </div>
-                <div className="flex items-center space-x-2 bg-slate-50 p-2 rounded-lg">
-                  <span className="text-blue-600">✔</span>
-                  <span>ห้ามข้องเกี่ยวกับสารเสพติดทุกประเภทและตรวจคัดปัสสาวะอย่างสม่ำเสมอ</span>
+                <div className="flex items-center space-x-2 bg-slate-50 p-2.5 rounded-lg">
+                  <span className="text-emerald-600 font-bold text-xs">✔</span>
+                  <span>สุ่มตรวจปัสสาวะสม่ำเสมอ</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Diary / Daily Observation Note for Officer */}
+            <div className="border-t border-slate-100 pt-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black text-[#0f2d59] flex items-center gap-1.5">
+                  <span className="text-sm">📝</span> อนุทินการบันทึกสังเกตการณ์รายวัน (Probation Daily Diary)
+                </span>
+                <span className="text-[10px] bg-blue-50 text-blue-600 font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                  AUTO TIMESTAMPED
+                </span>
+              </div>
+
+              {/* List of notes */}
+              <div className="max-h-40 overflow-y-auto space-y-2 pr-1 scrollbar-thin">
+                {observationNotes.filter(note => note.probationerId === selectedProbationer.id).length === 0 ? (
+                  <p className="text-[11px] text-slate-400 italic text-center py-6 bg-slate-50 rounded-2xl">
+                    ยังไม่มีบันทึกการสังเกตการณ์พฤติกรรมสำหรับบุคคลนี้
+                  </p>
+                ) : (
+                  observationNotes
+                    .filter(note => note.probationerId === selectedProbationer.id)
+                    .map((note) => (
+                      <div key={note.id} className="bg-slate-50 p-3 rounded-xl space-y-1.5 border border-slate-100">
+                        <div className="flex justify-between items-center text-[10px] text-slate-400 font-bold">
+                          <span className="text-blue-900 font-black flex items-center gap-1">
+                            👤 {note.officerName}
+                          </span>
+                          <span className="font-mono text-slate-500">📅 {note.timestamp}</span>
+                        </div>
+                        <p className="text-xs text-slate-600 font-medium leading-relaxed">
+                          {note.content}
+                        </p>
+                      </div>
+                    ))
+                )}
+              </div>
+
+              {/* Form to add note */}
+              <div className="space-y-2 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+                <textarea
+                  value={diaryContent}
+                  onChange={(e) => setDiaryContent(e.target.value)}
+                  placeholder="กรอกบันทึกสังเกตการณ์สั้นๆ เช่น พฤติกรรม ทัศนคติ อุปสรรค ความร่วมมือ หรือข้อเสนอแนะเพิ่มเติม..."
+                  className="w-full text-xs p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-100 outline-none resize-none font-medium h-16"
+                />
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => {
+                      if (!diaryContent.trim()) return;
+                      addObservationNote(selectedProbationer.id, diaryContent);
+                      setDiaryContent("");
+                    }}
+                    disabled={!diaryContent.trim()}
+                    className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 text-white font-bold text-[10.5px] py-1.5 px-4 rounded-lg shadow-sm transition-all flex items-center gap-1"
+                  >
+                    <span>➕</span> เพิ่มบันทึกสังเกตการณ์ออโต้ไทม์สแตมป์
+                  </button>
                 </div>
               </div>
             </div>
 
             {/* Close button */}
-            <div className="flex items-center justify-end pt-2">
+            <div className="flex items-center justify-end border-t border-slate-100 pt-3">
               <button
-                onClick={() => setSelectedProbationer(null)}
+                onClick={() => {
+                  setSelectedProbationer(null);
+                  setDiaryContent("");
+                }}
                 className="bg-[#0f2d59] hover:bg-blue-900 text-white font-bold text-xs py-2 px-5 rounded-xl shadow-md transition-all"
               >
                 ปิดแฟ้มประวัติ

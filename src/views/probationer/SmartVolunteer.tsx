@@ -1,3 +1,14 @@
+// ==========================================
+// 🇹🇭 ไฟล์: /src/views/probationer/SmartVolunteer.tsx
+// คำอธิบาย: หน้าจอกิจกรรมบริการสังคมอัจฉริยะ (Smart Volunteer) สำหรับฝั่งผู้ถูกคุมประพฤติ
+// โครงสร้างไฟล์:
+//   - ส่วนนำเข้าข้อมูลและไอคอน (Imports)
+//   - ตัวแปรและสถานะการกรองข้อมูลกิจกรรม (Filter State & Logic)
+//   - ตารางและรายการแสดงกิจกรรมบำเพ็ญประโยชน์ (Activities List View)
+//   - แผนที่ Google Maps แสดงพิกัดจริงในเขต อ.เมืองสงขลา จ.สงขลา (Embedded Google Maps & GPS Coordinate)
+//   - สรุปผลชั่วโมงสะสมและข้อเสนอแนะอัจฉริยะ (Progress Summary & AI Recommendation)
+// ==========================================
+
 import React, { useState } from "react";
 import { useApp } from "../../context/AppContext";
 import { GovBanner } from "../../components/GovBanner";
@@ -63,10 +74,9 @@ export const SmartVolunteer: React.FC = () => {
               className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs bg-slate-50 focus:bg-white outline-none focus:ring-2 focus:ring-[#cca43b]/40 transition-all text-slate-700"
             >
               <option value="ทั้งหมด">กรองตามจังหวัด: ทั้งหมด</option>
-              <option value="ปทุมธานี">ปทุมธานี</option>
+              <option value="สงขลา">สงขลา</option>
               <option value="นนทบุรี">นนทบุรี</option>
               <option value="กรุงเทพมหานคร">กรุงเทพมหานคร</option>
-              <option value="สงขลา">สงขลา</option>
             </select>
           </div>
 
@@ -305,7 +315,7 @@ export const SmartVolunteer: React.FC = () => {
             <div className="p-3 bg-blue-50/50 rounded-xl border border-blue-100 text-xs space-y-2 text-blue-800">
               <span className="font-bold block">📌 แนะนำสำหรับการทำดีถัดไป:</span>
               <p className="text-[11px] leading-relaxed text-slate-600">
-                เนื่องจากชั่วโมงบำเพ็ญประโยชน์ของคุณสมชายขาดอีกเพียง **50 ชั่วโมง** แนะนำให้สมัครกิจกรรมเทศบาลเมืองปทุมธานีในวันพุธถัดไปเพื่อสะสมให้ครบตามเป้าหมายของคำสั่งศาลค่ะ
+                เนื่องจากชั่วโมงบำเพ็ญประโยชน์ของคุณสมชายขาดอีกเพียง **50 ชั่วโมง** แนะนำให้สมัครกิจกรรมของเทศบาลนครสงขลาหรือวัดเขารูปช้างในวันพุธถัดไปเพื่อสะสมให้ครบตามเป้าหมายของคำสั่งศาลค่ะ
               </p>
             </div>
           </div>

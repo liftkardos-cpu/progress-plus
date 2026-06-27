@@ -36,10 +36,12 @@ import {
 } from "lucide-react";
 
 export const LoginView: React.FC = () => {
-  const { setRole, setIsLoggedIn, addNotification } = useApp();
+  const { setRole, setIsLoggedIn, addNotification, probationers, updateProbationerProfile } = useApp();
   const [selectedTab, setSelectedTab] = useState<UserRole>("PROBATIONER");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showStudentDropdown, setShowStudentDropdown] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isDemoOpen, setIsDemoOpen] = useState(true);
@@ -122,79 +124,99 @@ export const LoginView: React.FC = () => {
     );
   };
 
+  // Quick direct simulated login for 3 roles
+  const handleQuickLoginDirectly = (role: UserRole, email: string, pass: string) => {
+    setSelectedTab(role);
+    setUsername(email);
+    setPassword(pass);
+    setRole(role);
+    
+    if (role === "PROBATIONER") {
+      const trimmedUser = email.trim().toLowerCase();
+      const matched = probationers.find(p => {
+        const rawId = p.id.replace("PB-", "");
+        return rawId === trimmedUser || p.id.toLowerCase() === trimmedUser || p.email.toLowerCase() === trimmedUser || p.name.includes(email);
+      });
+      
+      if (matched) {
+        updateProbationerProfile(matched);
+        addNotification(
+          "เข้าสู่ระบบสำเร็จ (ผู้ถูกคุมประพฤติ)",
+          `ยินดีต้อนรับคุณ ${matched.name} (${matched.id.replace("PB-", "รหัสนิสิต ")}) เข้าสู่ระบบ PROGRESS+`,
+          "ระบบ"
+        );
+      } else {
+        updateProbationerProfile(probationers[0]);
+        addNotification(
+          "เข้าสู่ระบบสำเร็จ (ผู้ถูกคุมประพฤติ)",
+          `ยินดีต้อนรับคุณ ${probationers[0].name} เข้าสู่ระบบ PROGRESS+`,
+          "ระบบ"
+        );
+      }
+    } else if (role === "OFFICER") {
+      addNotification(
+        "เข้าสู่ระบบสำเร็จ (เจ้าหน้าที่)",
+        `ยินดีต้อนรับ คุณณัฐพงษ์ รักงาน เข้าสู่ระบบ PROGRESS+`,
+        "ระบบ"
+      );
+    } else if (role === "PARTNER") {
+      addNotification(
+        "เข้าสู่ระบบสำเร็จ (หน่วยงานภาคีเครือข่าย)",
+        `ยินดีต้อนรับ ผู้แทนหน่วยงานภาคีเครือข่าย เข้าสู่ระบบ PROGRESS+`,
+        "ระบบ"
+      );
+    }
+    
+    setIsLoggedIn(true);
+  };
+
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!username || !password) {
       alert("กรุณากรอกข้อมูลให้ครบถ้วน");
       return;
     }
+    
     setRole(selectedTab);
+    
+    if (selectedTab === "PROBATIONER") {
+      const trimmedUser = username.trim().toLowerCase();
+      // Match by Student ID (e.g. 6711010186), context ID (e.g. PB-6711010186), or email, or name
+      const matched = probationers.find(p => {
+        const rawId = p.id.replace("PB-", "");
+        return rawId === trimmedUser || p.id.toLowerCase() === trimmedUser || p.email.toLowerCase() === trimmedUser || p.name.includes(username);
+      });
+      
+      if (matched) {
+        updateProbationerProfile(matched);
+        addNotification(
+          "เข้าสู่ระบบสำเร็จ (ฐานข้อมูลนิสิต)",
+          `ยินดีต้อนรับคุณ ${matched.name} (${matched.id.replace("PB-", "รหัสนิสิต ")}) เข้าสู่ระบบ PROGRESS+`,
+          "ระบบ"
+        );
+      } else {
+        // Fallback to first student
+        updateProbationerProfile(probationers[0]);
+        addNotification(
+          "เข้าสู่ระบบสำเร็จ (ฐานข้อมูลนิสิต)",
+          `ยินดีต้อนรับคุณ ${probationers[0].name} เข้าสู่ระบบ PROGRESS+`,
+          "ระบบ"
+        );
+      }
+    } else {
+      addNotification(
+        "เข้าสู่ระบบสำเร็จ",
+        `ยินดีต้อนรับเข้าสู่ระบบ PROGRESS+ : ก้าวใหม่ สู่โอกาสใหม่`,
+        "ระบบ"
+      );
+    }
+    
     setIsLoggedIn(true);
-    addNotification(
-      "เข้าสู่ระบบสำเร็จ",
-      `ยินดีต้อนรับเข้าสู่ระบบ PROGRESS+ : ก้าวใหม่ สู่โอกาสใหม่`,
-      "ระบบ"
-    );
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#ebf5fc] via-[#f4fafe] to-[#e4f2fd] flex flex-col justify-between font-sans relative overflow-x-hidden select-none">
       
-      {/* 🛠️ DEMO ACCOUNTS PANEL (floating at the top) */}
-      {isDemoOpen && (
-        <div className="relative z-50 bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 flex flex-col md:flex-row items-center justify-between text-xs text-amber-900 gap-2 backdrop-blur-md">
-          <div className="flex items-center space-x-2 font-bold">
-            <Sparkles className="w-4 h-4 text-amber-600 animate-pulse" />
-            <span>🛠️ แผงจำลองบัญชีผู้ใช้สำหรับทดสอบ (Demo Accounts Simulation) — คลิกเพื่อจำลองอีเมลและรหัสผ่านทั้ง 3 ฝั่งได้ทันที</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            {/* 1. Probationer Demo */}
-            <button
-              onClick={() => handleSimulateLogin("PROBATIONER", "somchai.jaidee@email.com", "somchai123")}
-              className={`px-3 py-1.5 rounded-lg font-bold border transition-all cursor-pointer ${
-                selectedTab === "PROBATIONER"
-                  ? "bg-[#1b439c] text-white border-blue-600 shadow-sm"
-                  : "bg-white hover:bg-slate-100 text-slate-700 border-slate-200"
-              }`}
-            >
-              1. ผู้ถูกคุมประพฤติ
-            </button>
-
-            {/* 2. Officer Demo */}
-            <button
-              onClick={() => handleSimulateLogin("OFFICER", "nattapong.officer@probation.go.th", "officer123")}
-              className={`px-3 py-1.5 rounded-lg font-bold border transition-all cursor-pointer ${
-                selectedTab === "OFFICER"
-                  ? "bg-blue-700 text-white border-blue-600 shadow-sm"
-                  : "bg-white hover:bg-slate-100 text-slate-700 border-slate-200"
-              }`}
-            >
-              2. เจ้าหน้าที่
-            </button>
-
-            {/* 3. Partner Demo */}
-            <button
-              onClick={() => handleSimulateLogin("PARTNER", "hatyai.partner@hatyai.go.th", "partner123")}
-              className={`px-3 py-1.5 rounded-lg font-bold border transition-all cursor-pointer ${
-                selectedTab === "PARTNER"
-                  ? "bg-emerald-700 text-white border-emerald-600 shadow-sm"
-                  : "bg-white hover:bg-slate-100 text-slate-700 border-slate-200"
-              }`}
-            >
-              3. หน่วยงานภาคี
-            </button>
-
-            {/* Close button */}
-            <button
-              onClick={() => setIsDemoOpen(false)}
-              className="text-amber-700 hover:text-amber-900 ml-2 font-bold text-xs hover:underline cursor-pointer"
-            >
-              ซ่อนแผง
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Main Container - Skyline & Justice background element */}
       <div className="flex-1 max-w-7xl w-full mx-auto px-4 py-8 md:px-10 flex flex-col justify-center relative z-10">
         
@@ -210,7 +232,7 @@ export const LoginView: React.FC = () => {
             <div className="flex items-center space-x-3.5">
               <div className="w-14 h-14 shrink-0 shadow-md bg-[#001D3D] rounded-full border border-[#cca43b]/40 overflow-hidden p-0.5">
                 <img
-                  src="/src/assets/images/progress_logo_with_text_1782386959224.jpg"
+                  src="/src/assets/images/progress_logo_new_1782556334626.jpg"
                   alt="PROGRESS+ Logo"
                   className="w-full h-full object-cover rounded-full"
                   referrerPolicy="no-referrer"
@@ -442,7 +464,7 @@ export const LoginView: React.FC = () => {
               <div className="flex justify-center -mb-2">
                 <div className="w-16 h-16 bg-[#001D3D] rounded-2xl border border-[#cca43b]/30 flex items-center justify-center p-0.5 shadow-md relative overflow-hidden">
                   <img
-                    src="/src/assets/images/progress_logo_with_text_1782386959224.jpg"
+                    src="/src/assets/images/progress_logo_new_1782556334626.jpg"
                     alt="PROGRESS+ Logo"
                     className="w-full h-full object-cover rounded-xl"
                     referrerPolicy="no-referrer"
@@ -514,9 +536,11 @@ export const LoginView: React.FC = () => {
               <form onSubmit={handleLoginSubmit} className="space-y-4">
                 
                 {/* Username Input */}
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 relative">
                   <label className="block text-[11px] font-bold text-slate-500">
-                    เลขประจำตัวประชาชน / เลขบัตรประจำตัวเจ้าหน้าที่ / อีเมล
+                    {selectedTab === "PROBATIONER" 
+                      ? "รหัสนิสิต / ชื่อผู้ถูกคุมประพฤติ (ค้นหาจากฐานข้อมูล 375 คน)" 
+                      : "เลขประจำตัวประชาชน / เลขบัตรประจำตัวเจ้าหน้าที่ / อีเมล"}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -526,10 +550,15 @@ export const LoginView: React.FC = () => {
                       type="text"
                       required
                       value={username}
-                      onChange={(e) => setUsername(e.target.value)}
+                      onFocus={() => setShowStudentDropdown(true)}
+                      onBlur={() => setTimeout(() => setShowStudentDropdown(false), 200)}
+                      onChange={(e) => {
+                        setUsername(e.target.value);
+                        setShowStudentDropdown(true);
+                      }}
                       placeholder={
                         selectedTab === "PROBATIONER"
-                          ? "กรอกเลขประจำตัวประชาชน 13 หลักหรืออีเมล"
+                          ? "พิมพ์ชื่อ หรือ รหัสนิสิต (เช่น มุกธิดา หรือ 6710111002)"
                           : selectedTab === "OFFICER"
                           ? "กรอกเลขบัตรประจำตัวเจ้าหน้าที่ / อีเมล"
                           : "กรอกเลขทะเบียนหน่วยงาน / อีเมล"
@@ -537,6 +566,76 @@ export const LoginView: React.FC = () => {
                       className="block w-full pl-11 pr-4 py-3 border border-slate-200 rounded-2xl text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-600/10 focus:border-blue-600 transition-all outline-none text-slate-800 font-medium placeholder:text-slate-400"
                     />
                   </div>
+
+                  {/* Search Autocomplete Dropdown for Probationer Database */}
+                  {selectedTab === "PROBATIONER" && (
+                    <div className="text-[10px] text-slate-400 font-medium px-1 flex items-center justify-between">
+                      <span>💡 ค้นหาและเลือกรหัสนิสิตหรือชื่อจริงจาก 375 คนได้ทันที</span>
+                    </div>
+                  )}
+
+                  {selectedTab === "PROBATIONER" && showStudentDropdown && (
+                    (() => {
+                      const query = username.trim().toLowerCase();
+                      const filtered = query
+                        ? probationers.filter(p => {
+                            const rawId = p.id.replace("PB-", "");
+                            return p.name.toLowerCase().includes(query) || 
+                                   rawId.includes(query) || 
+                                   p.id.toLowerCase().includes(query);
+                          }).slice(0, 6)
+                        : probationers.slice(0, 6); // default suggestions
+
+                      if (filtered.length > 0) {
+                        return (
+                          <div className="absolute z-30 w-full mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-60 overflow-y-auto divide-y divide-slate-100">
+                            <div className="bg-slate-50 text-[10px] font-bold text-slate-400 px-3 py-1.5 flex justify-between items-center">
+                              <span>พบรายชื่อที่ตรงกัน (แสดงสูงสุด 6 รายการ)</span>
+                              <span>ทั้งหมด 375 รายชื่อ</span>
+                            </div>
+                            {filtered.map((student) => {
+                              const rawId = student.id.replace("PB-", "");
+                              return (
+                                <button
+                                  key={student.id}
+                                  type="button"
+                                  onMouseDown={() => {
+                                    setUsername(rawId);
+                                    setPassword("student123");
+                                    setShowStudentDropdown(false);
+                                  }}
+                                  className="w-full text-left px-4 py-2 hover:bg-blue-50 text-xs text-slate-700 flex items-center justify-between transition-all"
+                                >
+                                  <div className="flex items-center space-x-2.5">
+                                    <img 
+                                      src={student.avatarUrl} 
+                                      alt={student.name} 
+                                      className="w-7 h-7 rounded-full object-cover border border-slate-100" 
+                                      referrerPolicy="no-referrer"
+                                    />
+                                    <div>
+                                      <div className="font-bold text-slate-800">{student.name}</div>
+                                      <div className="text-[10px] text-slate-400 font-medium">รหัสนิสิต: {rawId} • {student.email}</div>
+                                    </div>
+                                  </div>
+                                  <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${
+                                    student.status === "ปกติ" 
+                                      ? "bg-emerald-50 text-emerald-600 border border-emerald-100" 
+                                      : student.status === "เฝ้าระวังพิเศษ"
+                                      ? "bg-rose-50 text-rose-600 border border-rose-100"
+                                      : "bg-amber-50 text-amber-600 border border-amber-100"
+                                  }`}>
+                                    {student.status}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()
+                  )}
                 </div>
 
                 {/* Password Input */}
@@ -607,73 +706,72 @@ export const LoginView: React.FC = () => {
               </form>
 
               {/* Or separator */}
-              <div className="relative flex py-2 items-center">
+              <div className="relative flex py-1 items-center">
                 <div className="flex-grow border-t border-slate-100"></div>
-                <span className="flex-shrink mx-4 text-[11px] text-slate-400 font-bold uppercase">หรือ</span>
+                <span className="flex-shrink mx-4 text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">ทางเลือกสำหรับทดสอบ</span>
                 <div className="flex-grow border-t border-slate-100"></div>
               </div>
 
-              {/* Alternative login methods (ThaiID / Digital ID) */}
-              <div className="space-y-2.5">
-                
-                {/* Login with ThaiID */}
+              {/* Simulated Quick Login (ระบบจำลองข้อมูลสำหรับผู้พัฒนา/ทดสอบ) */}
+              <div className="space-y-2 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+                <div className="text-[10px] text-slate-500 font-black text-center mb-1 flex items-center justify-center space-x-1">
+                  <Sparkles className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
+                  <span>สิทธิ์การใช้งานจำลอง (Quick Direct Login)</span>
+                </div>
+
+                {/* 1. Probationer Quick Login */}
                 <button
                   type="button"
-                  onClick={() => {
-                    setSelectedTab("PROBATIONER");
-                    setUsername("somchai.jaidee@email.com");
-                    setPassword("somchai123");
-                    setRole("PROBATIONER");
-                    setIsLoggedIn(true);
-                    addNotification("เข้าสู่ระบบด้วย ThaiID", "การสแกนใบหน้าและเชื่อมต่อฐานข้อมูลกรมการปกครองผ่าน ThaiID สำเร็จ", "ระบบ");
-                  }}
-                  className="w-full border border-slate-200 hover:border-blue-600 bg-white text-slate-700 hover:text-blue-600 py-3 rounded-2xl font-bold text-xs transition-all flex items-center justify-center space-x-2.5 shadow-xs cursor-pointer"
+                  onClick={() => handleQuickLoginDirectly("PROBATIONER", "somchai.jaidee@email.com", "somchai123")}
+                  className="w-full bg-white hover:bg-blue-50/30 border border-slate-200 hover:border-blue-500 text-slate-700 hover:text-blue-700 p-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-between shadow-xs group cursor-pointer"
                 >
-                  {/* High fidelity ThaiID Seal vector */}
-                  <div className="w-5 h-5 shrink-0">
-                    <svg viewBox="0 0 100 100" className="w-full h-full">
-                      <circle cx="50" cy="50" r="48" fill="#1e3a8a" />
-                      <circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" strokeWidth="2" />
-                      <path d="M12 35 C30 20, 70 20, 88 35 L82 45 C65 33, 35 33, 18 45 Z" fill="#ef4444" />
-                      <path d="M18 45 C35 33, 65 33, 82 45 L76 55 C60 45, 40 45, 24 55 Z" fill="#ffffff" />
-                      <path d="M24 55 C40 45, 60 45, 76 55 L70 65 C55 58, 45 58, 30 65 Z" fill="#1e40af" />
-                      <path d="M30 65 C45 58, 55 58, 70 65 L64 75 C52 70, 48 70, 36 75 Z" fill="#ffffff" />
-                      <path d="M36 75 C48 70, 52 70, 64 75 L58 85 C50 82, 50 82, 42 85 Z" fill="#ef4444" />
-                      <circle cx="50" cy="50" r="14" fill="#ffffff" stroke="#d97706" strokeWidth="1.5" />
-                      <path d="M50 42 L50 58 M42 50 L58 50" stroke="#d97706" strokeWidth="2" />
-                    </svg>
+                  <div className="flex items-center space-x-2.5">
+                    <div className="w-7 h-7 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center shrink-0">
+                      <Users className="w-4 h-4" />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-extrabold text-slate-800 text-[11px] group-hover:text-blue-700">1. ผู้ถูกคุมประพฤติจำลอง</div>
+                      <div className="text-[9px] text-slate-400 font-medium">นายสมชาย ใจดี (รหัสนิสิตจำลอง)</div>
+                    </div>
                   </div>
-                  <span>เข้าสู่ระบบด้วย <span className="font-extrabold">ThaiID</span></span>
+                  <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 transition-colors" />
                 </button>
 
-                {/* Login with Digital ID */}
+                {/* 2. Officer Quick Login */}
                 <button
                   type="button"
-                  onClick={() => {
-                    setSelectedTab("PROBATIONER");
-                    setUsername("somchai.jaidee@email.com");
-                    setPassword("somchai123");
-                    setRole("PROBATIONER");
-                    setIsLoggedIn(true);
-                    addNotification("เข้าสู่ระบบด้วย Digital ID", "การตรวจสอบอัตลักษณ์ตัวบุคคลแบบดิจิทัลสำเร็จเรียบร้อย", "ระบบ");
-                  }}
-                  className="w-full border border-slate-200 hover:border-emerald-600 bg-white text-slate-700 hover:text-emerald-600 py-3 rounded-2xl font-bold text-xs transition-all flex items-center justify-center space-x-2.5 shadow-xs cursor-pointer"
+                  onClick={() => handleQuickLoginDirectly("OFFICER", "nattapong.officer@probation.go.th", "officer123")}
+                  className="w-full bg-white hover:bg-indigo-50/30 border border-slate-200 hover:border-indigo-500 text-slate-700 hover:text-indigo-700 p-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-between shadow-xs group cursor-pointer"
                 >
-                  {/* High fidelity Digital ID vector */}
-                  <div className="w-5 h-5 shrink-0">
-                    <svg viewBox="0 0 100 100" className="w-full h-full">
-                      <circle cx="50" cy="50" r="48" fill="#0f172a" />
-                      <circle cx="50" cy="50" r="44" fill="none" stroke="#06b6d4" strokeWidth="2" />
-                      <path d="M30 50 Q50 30 70 50" fill="none" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" />
-                      <path d="M25 55 Q50 20 75 55" fill="none" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" />
-                      <path d="M35 45 Q50 35 65 45" fill="none" stroke="#0891b2" strokeWidth="2" strokeLinecap="round" />
-                      <path d="M40 60 Q50 50 60 60" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round" />
-                      <circle cx="50" cy="50" r="4" fill="#06b6d4" />
-                    </svg>
+                  <div className="flex items-center space-x-2.5">
+                    <div className="w-7 h-7 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center shrink-0">
+                      <ShieldCheck className="w-4 h-4" />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-extrabold text-slate-800 text-[11px] group-hover:text-indigo-700">2. เจ้าหน้าที่คุมประพฤติ</div>
+                      <div className="text-[9px] text-slate-400 font-medium">คุณณัฐพงษ์ รักงาน (ผู้ประเมินหลัก)</div>
+                    </div>
                   </div>
-                  <span>เข้าสู่ระบบด้วย <span className="font-extrabold">Digital ID</span></span>
+                  <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-600 transition-colors" />
                 </button>
 
+                {/* 3. Partner Quick Login */}
+                <button
+                  type="button"
+                  onClick={() => handleQuickLoginDirectly("PARTNER", "hatyai.partner@hatyai.go.th", "partner123")}
+                  className="w-full bg-white hover:bg-emerald-50/30 border border-slate-200 hover:border-emerald-500 text-slate-700 hover:text-emerald-700 p-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-between shadow-xs group cursor-pointer"
+                >
+                  <div className="flex items-center space-x-2.5">
+                    <div className="w-7 h-7 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center shrink-0">
+                      <Building className="w-4 h-4" />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-extrabold text-slate-800 text-[11px] group-hover:text-emerald-700">3. หน่วยงานภาคีเครือข่าย</div>
+                      <div className="text-[9px] text-slate-400 font-medium">เทศบาลนครหาดใหญ่ (ผู้ดูแลงานบริการสังคม)</div>
+                    </div>
+                  </div>
+                  <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600 transition-colors" />
+                </button>
               </div>
 
               {/* Bottom user manual link */}
@@ -901,7 +999,7 @@ export const LoginView: React.FC = () => {
                 <div className="flex items-center space-x-3.5 relative z-10">
                   <div className="w-12 h-12 rounded-xl bg-slate-900/50 border border-[#cca43b]/40 flex items-center justify-center overflow-hidden shrink-0">
                     <img
-                      src="/src/assets/images/progress_logo_with_text_1782386959224.jpg"
+                      src="/src/assets/images/progress_logo_new_1782556334626.jpg"
                       alt="PROGRESS+ Logo"
                       className="w-full h-full object-cover"
                       referrerPolicy="no-referrer"

@@ -4,7 +4,7 @@ import { Bell, MessageSquare, Menu, ChevronDown, RefreshCw } from "lucide-react"
 import { UserRole } from "../types";
 
 export const Header: React.FC<{ onToggleSidebar?: () => void }> = ({ onToggleSidebar }) => {
-  const { role, setRole, currentView, setCurrentView, notifications } = useApp();
+  const { role, setRole, currentView, setCurrentView, notifications, probationerProfile } = useApp();
   const [showRoleMenu, setShowRoleMenu] = useState(false);
 
   const getRoleLabel = (r: UserRole) => {
@@ -122,15 +122,15 @@ export const Header: React.FC<{ onToggleSidebar?: () => void }> = ({ onToggleSid
     switch (role) {
       case "PROBATIONER":
         return {
-          name: "นายสมชาย ใจดี",
+          name: probationerProfile?.name || "ผู้ถูกคุมประพฤติ",
           roleLabel: "ผู้ถูกคุมประพฤติ",
-          avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=facearea&facepad=2&q=80",
+          avatar: probationerProfile?.avatarUrl || `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="p_default" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p_default)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="\'Sarabun\', sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">👤</text></svg>')}`,
         };
       case "OFFICER":
         return {
           name: "นางสาวกัลยา รักษดี",
           roleLabel: "เจ้าพนักงานคุมประพฤติ",
-          avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80",
+          avatar: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="o_ก" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1e3a8a"/><stop offset="100%" stop-color="#3b82f6"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#o_ก)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="\'Sarabun\', sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ก</text></svg>')}`,
         };
       case "PARTNER":
         return {
@@ -205,7 +205,7 @@ export const Header: React.FC<{ onToggleSidebar?: () => void }> = ({ onToggleSid
         <div className="flex items-center space-x-2.5">
           <div className="w-9 h-9 rounded-lg border border-[#cca43b]/20 bg-[#001D3D] flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
             <img
-              src="/src/assets/images/progress_logo_with_text_1782386959224.jpg"
+              src="/src/assets/images/progress_logo_new_1782556334626.jpg"
               alt="PROGRESS+ Logo"
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"

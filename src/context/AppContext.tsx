@@ -1,3 +1,14 @@
+// ==========================================
+// 🇹🇭 ไฟล์: /src/context/AppContext.tsx
+// คำอธิบาย: ตัวเก็บและจัดการสถานะสากล (Global Context Store) ของระบบ PROGRESS+
+// โครงสร้างไฟล์:
+//   - ส่วนนำเข้าข้อมูลและชนิดข้อมูลอินเตอร์เฟส (Imports, Types, & Interfaces)
+//   - ข้อมูลเริ่มต้น (INITIAL_STATE): ข้อมูลผู้ถูกคุมประพฤติจำลอง, กิจกรรมบริการสังคมของ ม.ทักษิณ และเทศบาลเมืองสงขลา
+//   - ระบบแชตจำลองกับโมเดลปัญญาประดิษฐ์ (AI Chat Bot Integration & Handler)
+//   - ฟังก์ชันบำเพ็ญประโยชน์ สมัครกิจกรรม เช็คอินพิกัด และประเมินพฤติกรรม (Activity Workflows & Handlers)
+//   - คอร์สเรียนฝึกอาชีพ ตำแหน่งงาน และกำหนดนัดรายงานตัว (Jobs, Courses, and Appointments Management)
+// ==========================================
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import {
   UserRole,
@@ -7,8 +18,12 @@ import {
   Course,
   Appointment,
   NotificationItem,
-  ChatMessage
+  ChatMessage,
+  EmergencyRequest,
+  ObservationNote,
+  RiskAssessmentRecord
 } from "../types";
+import { MOCK_PROBATIONERS_375 } from "../data/probationersData";
 
 interface AppContextProps {
   role: UserRole;
@@ -24,6 +39,9 @@ interface AppContextProps {
   chatHistory: ChatMessage[];
   jobs: Job[];
   courses: Course[];
+  emergencyRequests: EmergencyRequest[];
+  observationNotes: ObservationNote[];
+  riskAssessmentRecords: RiskAssessmentRecord[];
   
   // State Setters & Actions
   setRole: (role: UserRole) => void;
@@ -53,7 +71,7 @@ interface AppContextProps {
   completeActivityApplication: (activityId: string, probationerId: string, ratingObj: any) => void;
   closeProbationerCase: (probationerId: string) => void;
   updateBehaviorScore: (probationerId: string, scoreVal: number) => void;
-  submitOnlineReport: (reportName: string, text: string) => void;
+  submitOnlineReport: (reportName: string, text: string, photoUrl?: string, location?: { lat: number; lng: number }) => void;
   addActivity: (activity: Omit<Activity, "id" | "currentParticipants" | "applicants">) => void;
   deleteActivity: (activityId: string) => void;
   addAppointment: (appointment: Omit<Appointment, "id" | "status">) => void;
@@ -65,177 +83,19 @@ interface AppContextProps {
   clearAllNotifications: () => void;
   sendChatMessage: (message: string) => Promise<void>;
   resetPrototypeData: () => void;
+  addEmergencyRequest: (reason: string, details: string, lat: number, lng: number) => void;
+  updateEmergencyRequestStatus: (id: string, status: EmergencyRequest["status"]) => void;
+  addObservationNote: (probationerId: string, content: string, officerName?: string) => void;
+  addRiskAssessmentRecord: (record: Omit<RiskAssessmentRecord, "id" | "date">) => void;
+  updateProbationerHoursDirectly: (probationerId: string, hours: number, activityTitle: string, partnerName: string) => void;
 }
 
 const AppContext = createContext<AppContextProps | undefined>(undefined);
 
 // Core Mock Data
-const INITIAL_PROBATIONER: ProfileData = {
-  id: "PB6705-123456",
-  name: "นายสมชาย ใจดี",
-  age: 28,
-  avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=facearea&facepad=2&q=80",
-  status: "อยู่ระหว่างคุมประพฤติ",
-  nationalId: "1-2345-67890-12-3",
-  birthDate: "15 มกราคม 2541",
-  gender: "ชาย",
-  nationality: "ไทย",
-  address: "140/9 หมู่ที่ 4 ต.เขารูปช้าง อ.เมืองสงขลา จังหวัดสงขลา รหัสไปรษณีย์ 90000",
-  phone: "081-234-5678",
-  email: "somchai.jaidee@email.com",
-  
-  // Case Data
-  caseId: "อ.1234/2567",
-  court: "ศาลจังหวัดสงขลา",
-  charge: "ขับขี่รถจักรยานยนต์ขณะมึนเมาสุราและขับรถโดยประมาทหวาดเสียว",
-  sentenceConditions: [
-    "รายงานตัวต่อพนักงานคุมประพฤติจำนวน 12 ครั้ง ในระยะเวลา 1 ปี",
-    "ทำงานบริการสังคมและสาธารณประโยชน์เป็นเวลา 48 ชั่วโมง",
-    "เข้าร่วมกิจกรรมปรับเปลี่ยนพฤติกรรมจำนวน 8 ครั้ง",
-    "ห้ามเกี่ยวข้องกับสิ่งเสพติดทุกประเภทและตรวจปัสสาวะตามกำหนด"
-  ],
-  probationPeriod: {
-    start: "20 พฤษภาคม 2567",
-    end: "20 พฤษภาคม 2568",
-    remainingDays: 365
-  },
-  probationOfficer: {
-    name: "นายณัฐพงษ์ มั่นคง",
-    contact: "เบอร์โทร 02-123-4567 ต่อ 402"
-  },
-  
-  // Stats
-  behaviorScore: 95,
-  completedHours: 150,
-  requiredHours: 200,
-  totalActivities: 6,
-  totalReports: 12,
-  completedReports: 8,
-  documentCount: 4,
-  totalDocuments: 5
-};
+const INITIAL_PROBATIONER: ProfileData = MOCK_PROBATIONERS_375[0];
 
-const INITIAL_PROBATIONERS_LIST: ProfileData[] = [
-  INITIAL_PROBATIONER,
-  {
-    id: "PB6705-123457",
-    name: "นายธนวัฒน์ รักดี",
-    age: 24,
-    avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=facearea&facepad=2&q=80",
-    status: "อยู่ระหว่างคุมประพฤติ",
-    nationalId: "1-1023-45678-90-1",
-    birthDate: "15 มีนาคม 2545",
-    gender: "ชาย",
-    nationality: "ไทย",
-    address: "123 หมู่ 5 ต.บ่อยาง อ.เมืองสงขลา จ.สงขลา 90000",
-    phone: "081-234-5678",
-    email: "tanawat.rakdee@email.com",
-    caseId: "อ.1235/2567",
-    court: "ศาลจังหวัดสงขลา",
-    charge: "มียาเสพติดให้โทษประเภท 1 (ยาบ้า) ไว้ในครอบครองเพื่อเสพ",
-    sentenceConditions: [
-      "รายงานตัวจำนวน 8 ครั้ง ใน 1 ปี",
-      "ทำงานบริการสังคม 24 ชั่วโมง",
-      "เข้ารับการบำบัดฟื้นฟูยาเสพติด CBT ครบ 12 ครั้ง",
-      "ตรวจหาสารเสพติดในปัสสาวะอย่างน้อยเดือนละ 1 ครั้ง"
-    ],
-    probationPeriod: {
-      start: "15 มีนาคม 2567",
-      end: "15 มีนาคม 2568",
-      remainingDays: 265
-    },
-    probationOfficer: {
-      name: "นายณัฐพงษ์ มั่นคง",
-      contact: "เบอร์โทร 02-123-4567 ต่อ 402"
-    },
-    behaviorScore: 86,
-    completedHours: 12,
-    requiredHours: 24,
-    totalActivities: 3,
-    totalReports: 8,
-    completedReports: 3,
-    documentCount: 3,
-    totalDocuments: 4
-  },
-  {
-    id: "PB6705-123458",
-    name: "นายวิชัย ใจกล้า",
-    age: 32,
-    avatarUrl: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&auto=format&fit=facearea&facepad=2&q=80",
-    status: "อยู่ระหว่างคุมประพฤติ",
-    nationalId: "3-1204-55667-88-9",
-    birthDate: "20 ตุลาคม 2537",
-    gender: "ชาย",
-    nationality: "ไทย",
-    address: "56 ต.เขารูปช้าง อ.เมืองสงขลา จ.สงขลา 90000",
-    phone: "089-999-8888",
-    email: "wichai.jaikla@email.com",
-    caseId: "อ.554/2567",
-    court: "ศาลจังหวัดสงขลา",
-    charge: "ลักทรัพย์ในเวลากลางคืน",
-    sentenceConditions: [
-      "รายงานตัวจำนวน 10 ครั้ง ใน 1 ปี",
-      "ทำงานบริการสังคม 48 ชั่วโมง",
-      "ห้ามออกนอกเคหสถานระหว่างเวลา 22.00 - 04.00 น."
-    ],
-    probationPeriod: {
-      start: "10 กุมภาพันธ์ 2567",
-      end: "10 กุมภาพันธ์ 2568",
-      remainingDays: 230
-    },
-    probationOfficer: {
-      name: "นางสาวสุรีย์ ตันติพงษ์",
-      contact: "เบอร์โทร 02-123-4567 ต่อ 405"
-    },
-    behaviorScore: 52,
-    completedHours: 0,
-    requiredHours: 48,
-    totalActivities: 0,
-    totalReports: 10,
-    completedReports: 2,
-    documentCount: 1,
-    totalDocuments: 5
-  },
-  {
-    id: "PB6705-123459",
-    name: "นางสาวสุรีย์ เสมอใจ",
-    age: 25,
-    avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&auto=format&fit=facearea&facepad=2&q=80",
-    status: "ปกติ",
-    nationalId: "3-1402-99881-22-1",
-    birthDate: "5 เมษายน 2544",
-    gender: "หญิง",
-    nationality: "ไทย",
-    address: "12/4 ซอยติวานนท์ ต.ปากเกร็ด อ.ปากเกร็ด จ.นนทบุรี 11120",
-    phone: "085-555-4444",
-    email: "suree.sam@email.com",
-    caseId: "อ.789/2566",
-    court: "ศาลแขวงจังหวัดนนทบุรี",
-    charge: "ขับรถขณะมึนเมาสุราจนเป็นเหตุให้ผู้อื่นได้รับอันตราย",
-    sentenceConditions: [
-      "รายงานตัว 4 ครั้ง ใน 1 ปี",
-      "ทำงานบริการสังคม 24 ชั่วโมง",
-      "อบรมวินัยจราจร 1 ครั้ง"
-    ],
-    probationPeriod: {
-      start: "1 พฤษภาคม 2566",
-      end: "1 พฤษภาคม 2567",
-      remainingDays: 0
-    },
-    probationOfficer: {
-      name: "นายณัฐพงษ์ มั่นคง",
-      contact: "เบอร์โทร 02-123-4567 ต่อ 402"
-    },
-    behaviorScore: 100,
-    completedHours: 24,
-    requiredHours: 24,
-    totalActivities: 4,
-    totalReports: 4,
-    completedReports: 4,
-    documentCount: 4,
-    totalDocuments: 4
-  }
-];
+const INITIAL_PROBATIONERS_LIST: ProfileData[] = MOCK_PROBATIONERS_375;
 
 const INITIAL_ACTIVITIES: Activity[] = [
   {
@@ -257,7 +117,7 @@ const INITIAL_ACTIVITIES: Activity[] = [
       {
         probationerId: "PB6705-123456",
         probationerName: "นายสมชาย ใจดี",
-        avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=facearea&facepad=2&q=80",
+        avatarUrl: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="p_ส_ac1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p_ส_ac1)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="Sarabun, sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ส</text></svg>')}`,
         status: "เสร็จสิ้น",
         checkInTime: "08:35:22",
         checkOutTime: "12:05:18",
@@ -291,7 +151,7 @@ const INITIAL_ACTIVITIES: Activity[] = [
       {
         probationerId: "PB6705-123456",
         probationerName: "นายสมชาย ใจดี",
-        avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=facearea&facepad=2&q=80",
+        avatarUrl: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="p_ส_ac2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p_ส_ac2)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="Sarabun, sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ส</text></svg>')}`,
         status: "เสร็จสิ้น",
         checkInTime: "08:31:00",
         checkOutTime: "12:02:10",
@@ -307,7 +167,7 @@ const INITIAL_ACTIVITIES: Activity[] = [
       {
         probationerId: "PB6705-123457",
         probationerName: "นายธนวัฒน์ รักดี",
-        avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=facearea&facepad=2&q=80",
+        avatarUrl: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="p_ธ_ac2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#172554"/><stop offset="100%" stop-color="#1e3a8a"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p_ธ_ac2)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="Sarabun, sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ธ</text></svg>')}`,
         status: "เสร็จสิ้น",
         checkInTime: "08:42:00",
         checkOutTime: "12:00:00",
@@ -341,13 +201,13 @@ const INITIAL_ACTIVITIES: Activity[] = [
       {
         probationerId: "PB6705-123456",
         probationerName: "นายสมชาย ใจดี",
-        avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=facearea&facepad=2&q=80",
+        avatarUrl: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="p_ส_ac3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p_ส_ac3)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="Sarabun, sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ส</text></svg>')}`,
         status: "อนุมัติแล้ว"
       },
       {
         probationerId: "PB6705-123457",
         probationerName: "นายธนวัฒน์ รักดี",
-        avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=facearea&facepad=2&q=80",
+        avatarUrl: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="p_ธ_ac3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#172554"/><stop offset="100%" stop-color="#1e3a8a"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p_ธ_ac3)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="Sarabun, sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ธ</text></svg>')}`,
         status: "รออนุมัติ"
       }
     ]
@@ -388,7 +248,7 @@ const INITIAL_ACTIVITIES: Activity[] = [
       {
         probationerId: "PB6705-123456",
         probationerName: "นายสมชาย ใจดี",
-        avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=facearea&facepad=2&q=80",
+        avatarUrl: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="p_ส_ac5" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p_ส_ac5)"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/><text x="50" y="52" font-family="Sarabun, sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">ส</text></svg>')}`,
         status: "อนุมัติแล้ว"
       }
     ]
@@ -576,6 +436,91 @@ const MOCK_COURSES: Course[] = [
   }
 ];
 
+const INITIAL_EMERGENCY_REQUESTS: EmergencyRequest[] = [
+  {
+    id: "EM-9901",
+    probationerId: "PB6705-123458",
+    probationerName: "นายทวีศักดิ์ มั่นคง",
+    reason: "พาหนะเดินทางชำรุดเสียหาย",
+    details: "รถจักรยานยนต์ยางระเบิดขณะเดินทางไปบำเพ็ญประโยชน์ที่วัดเขารูปช้าง ไม่สามารถไปทันกำหนดรายงานตัวได้",
+    location: { lat: 7.1352, lng: 100.6215 },
+    timestamp: "26 มิถุนายน 2569 09:15 น.",
+    status: "รอการติดต่อกลับ"
+  }
+];
+
+const INITIAL_OBSERVATION_NOTES: ObservationNote[] = [
+  {
+    id: "NOTE-101",
+    probationerId: "PB6705-123456",
+    probationerName: "นายสมชาย ใจดี",
+    content: "ติดตามตรวจเยี่ยมสถานที่ทำงานอาสาคืบหน้าเรียบร้อยดี มีความขยันขันแข็งและตรงต่อเวลา และได้รับคำชื่นชมจากทางวัดบ่อยางในการช่วยทำความสะอาด",
+    timestamp: "18 มิถุนายน 2569 14:30 น.",
+    officerName: "นายณัฐพงษ์ มั่นคง"
+  },
+  {
+    id: "NOTE-102",
+    probationerId: "PB6705-123457",
+    probationerName: "นายธนวัฒน์ รักดี",
+    content: "เข้ารับการปรึกษาร่วมกับพนักงานคุมประพฤติและวิทยากรหลักสูตรบำบัดฟื้นฟูยาเสพติด CBT แสดงทัศนคติที่ดี มีความตั้งใจสูงในการเลิกพฤติกรรมเสี่ยง",
+    timestamp: "20 มิถุนายน 2569 11:15 น.",
+    officerName: "นายณัฐพงษ์ มั่นคง"
+  },
+  {
+    id: "NOTE-103",
+    probationerId: "PB6705-123458",
+    probationerName: "นายวิชัย ใจกล้า",
+    content: "โทรสอบถามติดตามสาเหตุที่ไม่เดินทางมารายงานตัวตามนัดหมาย พบว่ามีอุปสรรคเรื่องรายได้และครอบครัวขัดแย้ง แนะนำแนวทางลดปัญหาเบื้องต้นแล้ว",
+    timestamp: "22 มิถุนายน 2569 10:00 น.",
+    officerName: "นายณัฐพงษ์ มั่นคง"
+  }
+];
+
+const INITIAL_RISK_ASSESSMENTS: RiskAssessmentRecord[] = [
+  {
+    id: "RISK-201",
+    probationerId: "PB6705-123456",
+    probationerName: "นายสมชาย ใจดี",
+    date: "15 พฤษภาคม 2569",
+    crimeHistory: 0,
+    drugUsage: 0,
+    environment: 1,
+    compliance: 0,
+    totalScore: 1,
+    riskLevel: "ต่ำ",
+    recommendation: "แนะนำพบเจ้าหน้าที่ตามเงื่อนไขปกติ (1 ครั้งต่อเดือน) และสนับสนุนพาสปอร์ตส่งเสริมวิชาชีพสุจริต",
+    officerName: "นายณัฐพงษ์ มั่นคง"
+  },
+  {
+    id: "RISK-202",
+    probationerId: "PB6705-123457",
+    probationerName: "นายธนวัฒน์ รักดี",
+    date: "18 พฤษภาคม 2569",
+    crimeHistory: 1,
+    drugUsage: 2,
+    environment: 1,
+    compliance: 1,
+    totalScore: 5,
+    riskLevel: "ปานกลาง",
+    recommendation: "แนะนำพิจารณาเพิ่มความถี่การพบเจ้าหน้าที่ (2 ครั้งต่อเดือน) ร่วมกับการส่งเข้ารับการบำบัดฟื้นฟูตามหลักสูตรปรับเปลี่ยนพฤติกรรมสะสม",
+    officerName: "นายณัฐพงษ์ มั่นคง"
+  },
+  {
+    id: "RISK-203",
+    probationerId: "PB6705-123458",
+    probationerName: "นายวิชัย ใจกล้า",
+    date: "20 พฤษภาคม 2569",
+    crimeHistory: 2,
+    drugUsage: 3,
+    environment: 2,
+    compliance: 2,
+    totalScore: 9,
+    riskLevel: "สูงมาก / เฝ้าระวังรุนแรง",
+    recommendation: "⚠️ ต้องเพิ่มมาตรการคุมเข้มเป็นพิเศษ! บังคับรายงานตัวสัปดาห์ละ 1 ครั้ง และสุ่มสกัดตรวจสารเสพติด (Urine Test) ทุกรอบนัดหมาย ห้ามเข้าใกล้สถานบริการกลุ่มเสี่ยง",
+    officerName: "นายณัฐพงษ์ มั่นคง"
+  }
+];
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [role, setRoleState] = useState<UserRole>("PROBATIONER");
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
@@ -590,6 +535,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
   const [jobs, setJobs] = useState<Job[]>(MOCK_JOBS);
   const [courses, setCourses] = useState<Course[]>(MOCK_COURSES);
+  const [emergencyRequests, setEmergencyRequests] = useState<EmergencyRequest[]>(INITIAL_EMERGENCY_REQUESTS);
+  const [observationNotes, setObservationNotes] = useState<ObservationNote[]>(INITIAL_OBSERVATION_NOTES);
+  const [riskAssessmentRecords, setRiskAssessmentRecords] = useState<RiskAssessmentRecord[]>(INITIAL_RISK_ASSESSMENTS);
   
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
     {
@@ -678,7 +626,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const submitOnlineReport = (reportName: string, text: string) => {
+  const submitOnlineReport = (reportName: string, text: string, photoUrl?: string, location?: { lat: number; lng: number }) => {
     setProbationerProfile(prev => {
       const newCompletedReports = Math.min(prev.totalReports, prev.completedReports + 1);
       const newDocumentCount = Math.min(prev.totalDocuments, prev.documentCount + 1);
@@ -688,10 +636,100 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         documentCount: newDocumentCount
       };
     });
+    
+    // Add real-time notification
     addNotification(
       "ยื่นรายงานตัวออนไลน์สำเร็จ",
-      `รายงานตัวประจำรอบ '${reportName}' ของคุณได้รับการบันทึกแล้ว รอยืนยันความประพฤติจากเจ้าหน้าที่คุมประพฤติ`,
+      `รายงานตัวประจำรอบ '${reportName}' ของคุณได้รับการบันทึกแล้ว พร้อมรูปถ่ายยืนยันตัวตน และพิกัด Geolocation ตรวจสอบจริง (${location?.lat || 7.1476}, ${location?.lng || 100.6128})`,
       "รายงานตัว"
+    );
+  };
+
+  const addEmergencyRequest = (reason: string, details: string, lat: number, lng: number) => {
+    const newReq: EmergencyRequest = {
+      id: `EM-${Date.now().toString().slice(-4)}`,
+      probationerId: probationerProfile.id,
+      probationerName: probationerProfile.name,
+      reason,
+      details,
+      location: { lat, lng },
+      timestamp: new Date().toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric" }) + " " + new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) + " น.",
+      status: "รอการติดต่อกลับ"
+    };
+    setEmergencyRequests(prev => [newReq, ...prev]);
+
+    // Send real urgent system alert notification
+    addNotification(
+      "🆘 คำขอความช่วยเหลือ SOS ด่วน",
+      `คุณ ${probationerProfile.name} ขอความช่วยเหลือกรณี '${reason}': ${details}`,
+      "ระบบ",
+      true
+    );
+  };
+
+  const updateEmergencyRequestStatus = (id: string, status: EmergencyRequest["status"]) => {
+    setEmergencyRequests(prev => prev.map(req => req.id === id ? { ...req, status } : req));
+  };
+
+  const addObservationNote = (probationerId: string, content: string, officerName?: string) => {
+    const pName = probationers.find(p => p.id === probationerId)?.name || "ผู้ถูกคุมประพฤติ";
+    const newNote: ObservationNote = {
+      id: `NOTE-${Date.now().toString().slice(-4)}`,
+      probationerId,
+      probationerName: pName,
+      content,
+      timestamp: new Date().toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric" }) + " " + new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) + " น.",
+      officerName: officerName || "นายณัฐพงษ์ มั่นคง"
+    };
+    setObservationNotes(prev => [newNote, ...prev]);
+
+    addNotification(
+      "บันทึกโน้ตสังเกตการณ์พฤติกรรมรายวัน",
+      `พนักงานคุมประพฤติได้เพิ่มบันทึกสังเกตการณ์ของ ${pName}: "${content.slice(0, 40)}${content.length > 40 ? "..." : ""}"`,
+      "ระบบ"
+    );
+  };
+
+  const addRiskAssessmentRecord = (record: Omit<RiskAssessmentRecord, "id" | "date">) => {
+    const newRecord: RiskAssessmentRecord = {
+      ...record,
+      id: `RISK-${Date.now().toString().slice(-4)}`,
+      date: new Date().toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric" })
+    };
+    setRiskAssessmentRecords(prev => [newRecord, ...prev]);
+
+    addNotification(
+      "ประเมินดัชนีความเสี่ยงใหม่สำเร็จ",
+      `ระบบได้บันทึกผลการประเมินความเสี่ยงประเภทการผิดซ้ำของ ${record.probationerName} ระดับความเสี่ยง: ${record.riskLevel}`,
+      "ระบบ"
+    );
+  };
+
+  const updateProbationerHoursDirectly = (probationerId: string, hours: number, activityTitle: string, partnerName: string) => {
+    const pName = probationers.find(p => p.id === probationerId)?.name || "ผู้ถูกคุมประพฤติ";
+    
+    setProbationers(prev => prev.map(p => {
+      if (p.id !== probationerId) return p;
+      return {
+        ...p,
+        completedHours: Math.min(p.requiredHours, p.completedHours + hours),
+        totalActivities: p.totalActivities + 1
+      };
+    }));
+
+    if (probationerId === probationerProfile.id) {
+      setProbationerProfile(prev => ({
+        ...prev,
+        completedHours: Math.min(prev.requiredHours, prev.completedHours + hours),
+        totalActivities: prev.totalActivities + 1
+      }));
+    }
+
+    addNotification(
+      "อัปเดตชั่วโมงบำเพ็ญประโยชน์ออนไลน์สำเร็จ",
+      `หน่วยงานภาคี '${partnerName}' ได้อนุมัติและอัปเดตวิทยฐานะชั่วโมงบำเพ็ญประโยชน์จำนวน ${hours} ชั่วโมง สำหรับกิจกรรม '${activityTitle}' เข้าสู่โปรไฟล์ผู้ถูกคุมประพฤติ ${pName} เรียบร้อยแล้ว`,
+      "ชั่วโมงบำเพ็ญประโยชน์",
+      true
     );
   };
 
@@ -1049,6 +1087,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         chatHistory,
         jobs,
         courses,
+        emergencyRequests,
+        observationNotes,
+        riskAssessmentRecords,
         setRole,
         setIsLoggedIn,
         setCurrentView,
@@ -1074,7 +1115,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         clearNotifications,
         clearAllNotifications,
         sendChatMessage,
-        resetPrototypeData
+        resetPrototypeData,
+        addEmergencyRequest,
+        updateEmergencyRequestStatus,
+        addObservationNote,
+        addRiskAssessmentRecord,
+        updateProbationerHoursDirectly
       }}
     >
       {children}
