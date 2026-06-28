@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useApp } from "../context/AppContext";
-import progressAppIcon from "../assets/images/progress_app_icon_1782675461193.jpeg";
+import progressAppIcon from "../assets/images/progress_app_icon_1782678504850.jpeg";
 import { Bell, MessageSquare, Menu, ChevronDown, RefreshCw } from "lucide-react";
 import { UserRole } from "../types";
 

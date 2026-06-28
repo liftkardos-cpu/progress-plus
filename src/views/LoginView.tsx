@@ -4,7 +4,7 @@ import { UserRole } from "../types";
 import { AnimatePresence, motion } from "motion/react";
 import progressPrimaryLogo from "../assets/images/progress_primary_logo_1782675430398.jpeg";
 import progressHorizontalLogo from "../assets/images/progress_horizontal_logo_1782675445664.jpeg";
-import progressAppIcon from "../assets/images/progress_app_icon_1782675461193.jpeg";
+import progressAppIcon from "../assets/images/progress_app_icon_1782678504850.jpeg";
 import progressMonogram from "../assets/images/progress_monogram_1782675476258.jpeg";
 import studentChonlida from "../assets/images/student_6711010272_1782390537646.jpeg";
 import { 
