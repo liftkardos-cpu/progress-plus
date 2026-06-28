@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useApp } from "../context/AppContext";
 import { UserRole } from "../types";
 import { AnimatePresence, motion } from "motion/react";
+import progressLogo from "../assets/images/progress_logo_new_1782556334626.jpg";
+import studentChonlida from "../assets/images/student_6711010272_1782390537646.jpg";
 import { 
   Eye, 
   EyeOff, 
@@ -68,7 +70,7 @@ export const LoginView: React.FC = () => {
       borderColor: "border-blue-500/20",
       textAccent: "text-blue-700",
       avatarInitials: "CL",
-      imageSrc: "/assets/images/student_6711010272_1782390537646.jpg"
+      imageSrc: studentChonlida
     },
     {
       name: "นางสาวณัจยา ศรีมณี",
@@ -232,7 +234,7 @@ export const LoginView: React.FC = () => {
             <div className="flex items-center space-x-3.5">
               <div className="w-14 h-14 shrink-0 shadow-md bg-[#001D3D] rounded-full border border-[#cca43b]/40 overflow-hidden p-0.5">
                 <img
-                  src="/assets/images/progress_logo_new_1782556334626.jpg"
+                  src={progressLogo}
                   alt="PROGRESS+ Logo"
                   className="w-full h-full object-cover rounded-full"
                   referrerPolicy="no-referrer"
@@ -464,7 +466,7 @@ export const LoginView: React.FC = () => {
               <div className="flex justify-center -mb-2">
                 <div className="w-16 h-16 bg-[#001D3D] rounded-2xl border border-[#cca43b]/30 flex items-center justify-center p-0.5 shadow-md relative overflow-hidden">
                    <img
-                    src="/assets/images/progress_logo_new_1782556334626.jpg"
+                    src={progressLogo}
                     alt="PROGRESS+ Logo"
                     className="w-full h-full object-cover rounded-xl"
                     referrerPolicy="no-referrer"
@@ -999,7 +1001,7 @@ export const LoginView: React.FC = () => {
                 <div className="flex items-center space-x-3.5 relative z-10">
                   <div className="w-12 h-12 rounded-xl bg-slate-900/50 border border-[#cca43b]/40 flex items-center justify-center overflow-hidden shrink-0">
                     <img
-                      src="/assets/images/progress_logo_new_1782556334626.jpg"
+                      src={progressLogo}
                       alt="PROGRESS+ Logo"
                       className="w-full h-full object-cover"
                       referrerPolicy="no-referrer"

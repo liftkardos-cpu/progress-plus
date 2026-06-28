@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useApp } from "../context/AppContext";
+import progressLogo from "../assets/images/progress_logo_new_1782556334626.jpg";
 import { Bell, MessageSquare, Menu, ChevronDown, RefreshCw } from "lucide-react";
 import { UserRole } from "../types";
 
@@ -205,7 +206,7 @@ export const Header: React.FC<{ onToggleSidebar?: () => void }> = ({ onToggleSid
         <div className="flex items-center space-x-2.5">
           <div className="w-9 h-9 rounded-lg border border-[#cca43b]/20 bg-[#001D3D] flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
             <img
-              src="/assets/images/progress_logo_new_1782556334626.jpg"
+              src={progressLogo}
               alt="PROGRESS+ Logo"
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
