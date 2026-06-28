@@ -2,11 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useApp } from "../context/AppContext";
 import { UserRole } from "../types";
 import { AnimatePresence, motion } from "motion/react";
-import progressPrimaryLogo from "../assets/images/progress_primary_logo_1782675430398.jpg";
-import progressHorizontalLogo from "../assets/images/progress_horizontal_logo_1782675445664.jpg";
-import progressAppIcon from "../assets/images/progress_app_icon_1782675461193.jpg";
-import progressMonogram from "../assets/images/progress_monogram_1782675476258.jpg";
-import studentChonlida from "../assets/images/student_6711010272_1782390537646.jpg";
+import progressPrimaryLogo from "../assets/images/progress_primary_logo_1782675430398.jpeg";
+import progressHorizontalLogo from "../assets/images/progress_horizontal_logo_1782675445664.jpeg";
+import progressAppIcon from "../assets/images/progress_app_icon_1782675461193.jpeg";
+import progressMonogram from "../assets/images/progress_monogram_1782675476258.jpeg";
+import studentChonlida from "../assets/images/student_6711010272_1782390537646.jpeg";
 import { 
   Eye, 
   EyeOff, 
@@ -64,7 +64,7 @@ export const LoginView: React.FC = () => {
       borderColor: "border-amber-500/20",
       textAccent: "text-amber-700",
       avatarInitials: "EP",
-      imageSrc: "/assets/images/6711010186.jpg"
+      imageSrc: "/assets/images/6711010186.jpeg"
     },
     {
       name: "นางสาวชลิดา ขุนแก้ว",
@@ -82,7 +82,7 @@ export const LoginView: React.FC = () => {
       borderColor: "border-purple-500/20",
       textAccent: "text-purple-700",
       avatarInitials: "NJ",
-      imageSrc: "/assets/images/6711010080.jpg"
+      imageSrc: "/assets/images/6711010080.jpeg"
     },
     {
       name: "นางสาวอลิชาเฟียร์ สามะ",
@@ -91,7 +91,7 @@ export const LoginView: React.FC = () => {
       borderColor: "border-rose-500/20",
       textAccent: "text-rose-700",
       avatarInitials: "AF",
-      imageSrc: "/assets/images/6711010476.jpg"
+      imageSrc: "/assets/images/6711010476.jpeg"
     },
     {
       name: "นางสาวศรุตา แซ่โอ้ว",
@@ -100,7 +100,7 @@ export const LoginView: React.FC = () => {
       borderColor: "border-emerald-500/20",
       textAccent: "text-emerald-700",
       avatarInitials: "SR",
-      imageSrc: "/assets/images/6711010438.jpg"
+      imageSrc: "/assets/images/6711010438.jpeg"
     }
   ];
 
@@ -842,7 +842,7 @@ export const LoginView: React.FC = () => {
                           const target = e.currentTarget;
                           if (target.src.includes('student_')) {
                             // Try loading by student ID directly if custom path fails
-                            target.src = `/assets/images/${creators[activeCreatorIdx].studentId}.jpg`;
+                            target.src = `/assets/images/${creators[activeCreatorIdx].studentId}.jpeg`;
                           } else {
                             setImageErrors(prev => ({ ...prev, [activeCreatorIdx]: true }));
                           }

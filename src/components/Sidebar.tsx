@@ -1,6 +1,6 @@
 import React from "react";
 import { useApp } from "../context/AppContext";
-import progressMonogram from "../assets/images/progress_monogram_1782675476258.jpg";
+import progressMonogram from "../assets/images/progress_monogram_1782675476258.jpeg";
 import {
   Home,
   User,
