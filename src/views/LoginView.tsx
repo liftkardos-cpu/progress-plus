@@ -83,7 +83,7 @@ const getYouTubeEmbedUrl = (urlOrId: string) => {
     }
   }
 
-  // หากตรวจพบ Video ID ให้ทำการสร้าง Embed Link สำหรับ YouTube ในรูปแบบที่เล่นอัตโนมัติ วนซ้ำ และปิดเสียงเริ่มต้น
+  // หากตรวจพบ Video ID ให้ทำการสร้าง Embed Link สำหรับ YouTube ในรูปแบบที่เล่นอัตโนมัติ วนซ้ำ และปิดเสียงเริ่มต้น (เพื่อให้เบราว์เซอร์อนุญาตให้เล่นอัตโนมัติ)
   if (videoId) {
     return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}`;
   }
@@ -1488,39 +1488,45 @@ export const LoginView: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-950/75 backdrop-blur-3xl z-[200] flex flex-col items-center justify-center p-4 md:p-8"
+            className="fixed inset-0 bg-slate-950/85 backdrop-blur-3xl z-[200] flex flex-col items-center justify-center p-4 md:p-8"
           >
-            {/* Frameless Cinematic Video Player (Apple / Instagram Style) */}
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 30 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 30 }}
-              transition={{ type: "spring", damping: 26, stiffness: 220 }}
-              className="relative w-full max-w-4xl aspect-video rounded-3xl overflow-hidden bg-black/90 shadow-[0_0_60px_rgba(0,0,0,0.85)] border border-white/10"
-            >
-              <iframe
-                src={getYouTubeEmbedUrl(YOUTUBE_VIDEO_URL_OR_ID)}
-                title="PROGRESS+ Introductory Video"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                className="w-full h-full border-0"
-              />
-
-              {/* Minimal Floating Close Circle (Frosted Glass) */}
+            {/* Cinematic Container wrapper to hold video & outside elements */}
+            <div className="relative w-full max-w-4xl flex flex-col items-center mt-12 md:mt-0">
+              
+              {/* Minimal Floating Close Circle (Frosted Glass) OUTSIDE the video border */}
               <button
                 onClick={handleCloseIntroVideo}
-                className="absolute top-4 right-4 md:top-6 md:right-6 w-11 h-11 rounded-full bg-black/40 hover:bg-black/65 border border-white/15 backdrop-blur-md flex items-center justify-center text-white/90 hover:text-white hover:scale-105 active:scale-95 transition-all cursor-pointer z-10 shadow-lg"
+                className="absolute -top-14 right-2 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-md flex items-center justify-center text-white/90 hover:text-white hover:scale-105 active:scale-95 transition-all cursor-pointer z-10 shadow-lg"
                 title="ปิด"
               >
-                <X className="w-5.5 h-5.5" />
+                <X className="w-6 h-6" />
               </button>
 
-              {/* Tiny Floating Sound Hint */}
-              <div className="absolute top-4 left-4 md:top-6 md:left-6 bg-black/50 backdrop-blur-md px-3.5 py-1.5 rounded-full text-[10px] text-white/90 font-medium tracking-wide flex items-center space-x-2 border border-white/10 pointer-events-none shadow-md">
-                <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" />
-                <span>🔊 คลิกเปิดเสียงในเครื่องเล่น YouTube</span>
+              {/* Elegant dynamic tag at top-left of the video border */}
+              <div className="absolute -top-14 left-2 hidden sm:flex items-center space-x-2 text-white/80 select-none">
+                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                <span className="text-[10px] font-bold tracking-wider uppercase font-sans bg-white/5 border border-white/10 px-2.5 py-1 rounded-full backdrop-blur-sm">
+                  ✦ PROGRESS+ SYSTEM INTRO
+                </span>
               </div>
-            </motion.div>
+
+              {/* Frameless Cinematic Video Player (Apple / Instagram Style) */}
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: 30 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 30 }}
+                transition={{ type: "spring", damping: 26, stiffness: 220 }}
+                className="relative w-full aspect-video rounded-3xl overflow-hidden bg-black/90 shadow-[0_0_60px_rgba(0,0,0,0.85)] border border-white/10"
+              >
+                <iframe
+                  src={getYouTubeEmbedUrl(YOUTUBE_VIDEO_URL_OR_ID)}
+                  title="PROGRESS+ Introductory Video"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  className="w-full h-full border-0"
+                />
+              </motion.div>
+            </div>
 
             {/* Glassmorphic Minimalist Controls below Video */}
             <motion.div
@@ -1528,7 +1534,7 @@ export const LoginView: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 15 }}
               transition={{ delay: 0.15 }}
-              className="mt-6 flex flex-col sm:flex-row items-center gap-4 text-white font-medium"
+              className="mt-6 w-full max-w-4xl flex flex-col sm:flex-row items-center justify-between gap-4 text-white font-medium px-2"
             >
               {/* Checkbox (Modern Round Bubble style) */}
               <label className="flex items-center cursor-pointer select-none bg-white/5 hover:bg-white/10 border border-white/10 px-5 py-2.5 rounded-full backdrop-blur-md transition-all active:scale-98">
@@ -1548,12 +1554,18 @@ export const LoginView: React.FC = () => {
                 </span>
               </label>
 
+              {/* Extra Suggestion Tip: Elegant subtle note */}
+              <div className="hidden md:flex items-center space-x-2 text-xs text-slate-400 font-sans font-medium">
+                <span>🔊 วิดีโอเล่นอัตโนมัติ (คลิกเปิดเสียงในตัวเล่น)</span>
+              </div>
+
               {/* Close and Enter button */}
               <button
                 onClick={handleCloseIntroVideo}
-                className="px-6 py-2.5 rounded-full bg-white text-slate-900 hover:bg-slate-100 font-sans text-xs tracking-wide font-bold transition-all shadow-lg shadow-white/5 cursor-pointer active:scale-98"
+                className="w-full sm:w-auto px-8 py-3 rounded-full bg-white text-slate-900 hover:bg-slate-100 font-sans text-xs tracking-wide font-bold transition-all shadow-lg shadow-white/5 cursor-pointer active:scale-98 flex items-center justify-center space-x-2"
               >
-                เข้าสู่หน้าแรกระบบ
+                <span>เข้าสู่หน้าแรกระบบ</span>
+                <ArrowRight className="w-4 h-4" />
               </button>
             </motion.div>
           </motion.div>
